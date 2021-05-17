@@ -9,23 +9,20 @@ import { chain, _ } from './src/units/lodash'
 (async () => {
   const engine = createEngine({
     log: Log
-    // log: [
-    //   Log,
-    //   {}
-    // ]
   })
   await engine.run(({ log }) => {
     return [
       log('starting'),
-      () => 9,
-      (n:number) => n+1,
-      (n) => [ {'count': n}, {'count': 30}],
-      chain()
-        .map('count')
-        .value(),
-      _.sum,
-      log((input => `Result: ${input}`),
-      log('done!')
+      () => 9
+      // (n:number) => n+1,
+      // (n) => [ {'count': n}, {'count': 30}],
+      // ({ engine }) => { return (i) => {console.log(engine); return i }},
+      // chain()
+      //   .map('count')
+      //   .value(),
+      // _.sum,
+      // log(input => `Result: ${input}`),
+      // log('done!')
     ]
   })
 })()
