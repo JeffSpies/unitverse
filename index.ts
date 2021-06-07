@@ -8,21 +8,13 @@ import { chain, _ } from './src/units/lodash'
 
 (async () => {
   const engine = createEngine({
+    // TODO are these services, rather than tasks?
     log: Log
   })
-  await engine.run(({ log }) => {
-    return [
-      log('starting'),
-      () => 9
-      // (n:number) => n+1,
-      // (n) => [ {'count': n}, {'count': 30}],
-      // ({ engine }) => { return (i) => {console.log(engine); return i }},
-      // chain()
-      //   .map('count')
-      //   .value(),
-      // _.sum,
-      // log(input => `Result: ${input}`),
-      // log('done!')
-    ]
-  })
+  // The items registered in the engine above will be injected into the function passed to run
+  const result = await engine.run(({ log }) => [
+    log('starting'),
+    x => [1,2,3],
+    new Log()
+  ])
 })()

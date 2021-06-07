@@ -15,7 +15,7 @@ function wrapTask( cls:any ) {
 
 export function createEngine (tasks: object = {}): Engine {
   const scope = rootContainer.createScope()
-
+  
   // TODO complain about names that are too generic like "conifg", "defaultConfig", "unitverse"
   const userProvidedTasks = _.mapValues(tasks, (task:any) => {
     if ( task.prototype instanceof Task ) {
@@ -45,5 +45,6 @@ export function createEngine (tasks: object = {}): Engine {
     scope: asValue(scope),
     engine: asClass(Engine, { lifetime: Lifetime.SCOPED })
   })
+
   return scope.resolve('engine')
 }

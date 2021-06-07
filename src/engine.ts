@@ -4,61 +4,50 @@ import pWaterfall from 'p-waterfall'
 import pMap from 'p-map'
 import { Task } from './base/task'
 import { Observer } from './observer'
-import metadata from './util/metadata'
+import { Workflow } from './workflow'
 import { asFunction } from 'awilix'
 
 export class Engine {
+  builtFunction: any = undefined
   scope: any
   taskObjects: Task[] = []
   planned: Observer[]
+  wasExitCalled: boolean = false
   exitResult: any = undefined
 
   constructor({ scope }) {
     this.scope = scope
-    this.scope.register('exit', asFunction(this.exit.bind(this)))
+    const exitFn = this.exit.bind(this)
+    this.scope.register('exit', asFunction(() => exitFn))
   }
 
-  public prepare ( script: any) {
+  public inject ( fn ) {
+    return asFunction(fn).resolve(this.scope)
+  }
+
+  public injectWithInput ( fn ) {
+    return (input) => asFunction(fn).inject(
+      () => ({ input })
+    ).resolve(this.scope)
+  }
+
+  public build ( script: any): Function {
     // From awilix readme:
     //  Builds an instance of a class (or a function) by injecting dependencies
     //  but without registering it in the container.
     // Allow script to take advantage of DI (could have a config option on this)
     const functionsAndTasks = this.scope.build(script)
 
-    return _.map(functionsAndTasks, fnOrTask => {
-      // We're checking if this is a function created as result of the using 
-      // the wrapped task class. If the task function (really a Task 
-      // constructor) had input, it wouldn't be a function, but a Task. That's
-      // why we call the function (i.e., instantiate the class without input
-      // to the consturctor).
-      const wasWrappedByCreateEngine: boolean = metadata.get(fnOrTask, 'wrappedConstructor')
-      if ( wasWrappedByCreateEngine ) {
-        const taskObject = fnOrTask() // Constructing the task without an input
-        return taskObject.fn.bind(taskObject)
-      }
+    const workflow = new Workflow(this)
 
-      return fnOrTask instanceof Task ?
-        fnOrTask.fn.bind(fnOrTask) :
-        // fnOrTask
-        this.scope.build(fnOrTask)
-    })
-  }
+    for ( let i = 0; i < functionsAndTasks.length; i++ ) {
+      workflow.add(functionsAndTasks[i])
+    }
 
-  public build ( script: any): Function {
-    const fnArray = this.prepare(script)
-    return ( fnArray => {
-      return async () => {
-        let result
-        for ( let i = 0; i < fnArray.length; i++ ) {
-          result = await fnArray[i](result)
-          if( this.exitResult !== undefined ) {
-            return this.exitResult
-          }
-        }
-        return result
-      }
-      // return input => pWaterfall(fnArray, input)
-    })( fnArray )
+    if (this.builtFunction === undefined) {
+      this.builtFunction = workflow.compile()
+    }
+    return this.builtFunction
   }
 
   /**
@@ -67,12 +56,15 @@ export class Engine {
    * @param input 
    */
   public async run( script:any, input?: any ): Promise<any> {
-    const builtFunction = this.build(script)
-    const result = await builtFunction(input)
+    if (this.builtFunction === undefined) {
+      this.builtFunction = this.build(script)
+    }
+    const result = await this.builtFunction(input)
     return result
   }
 
   public exit ( result: any ) {
+    this.wasExitCalled = true
     this.exitResult = result
   }
 

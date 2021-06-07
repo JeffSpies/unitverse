@@ -55,3 +55,17 @@ The tasks that are available on the engine that make use of provided components 
 - engine.log()
 - engine.inputter()
 - engine.checkpoint()
+
+#### New thinking
+Perhaps Tasks can use di'd services:
+- emitter emit
+- logger log
+- queue queue
+
+```ts
+(...services) => {
+  return (input) => {
+    service(input)
+    return input
+  }
+}
