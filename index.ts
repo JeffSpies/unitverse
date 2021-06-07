@@ -12,9 +12,11 @@ import { chain, _ } from './src/units/lodash'
     log: Log
   })
   // The items registered in the engine above will be injected into the function passed to run
-  const result = await engine.run(({ log }) => [
-    log('starting'),
-    x => [1,2,3],
-    new Log()
-  ])
+  const result = await engine.run(({ log }) => {
+    return [
+      engine.inject(({ cache }) => { console.log('cache is', cache) }),
+      () => 1,
+      log()
+    ]
+  })
 })()

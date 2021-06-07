@@ -59,6 +59,10 @@ export class Queue extends Task{
     return this.completedEvents
   }
 
+  async modifyWorkflow(workflow) {
+    
+  }
+
   async onPreplan(context: IRunContext) {
     this.queueInstance.process(async input => {
       const engine = buildEngine(this.engine.config)

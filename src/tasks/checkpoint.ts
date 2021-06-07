@@ -19,7 +19,11 @@ export class Checkpoint extends Task{
   events: {
   }
   
-  constructor(name:string, config:CheckpointConfig) {
+  constructor({
+    cache,
+    name,
+    config
+  }) {
     super(name, config)
     
     this.baseName = name
@@ -30,7 +34,7 @@ export class Checkpoint extends Task{
     }
     this.config = !config ? defaults : _.defaultsDeep(config, defaults)
     
-    this.cacheInstance = new this.config.cacheClass(
+    this.cacheInstance = cache(
       'checkpoints', 
       this.config.cacheOptions
     )
@@ -71,6 +75,13 @@ export class Checkpoint extends Task{
       return this.cachedTask()
     }
     return this.uncachedTask(input)
+  }
+
+  async forWorkflow(workflow) {
+    if (await this.isCached()) {
+      workflow.clear()
+    }
+    return this.fn.bind(this)
   }
 
   async onPreplan(context: IRunContext) {

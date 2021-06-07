@@ -21,11 +21,11 @@ export class Engine {
     this.scope.register('exit', asFunction(() => exitFn))
   }
 
-  public inject ( fn ) {
-    return asFunction(fn).resolve(this.scope)
-  }
+  // public inject ( fn ) {
+  //   return asFunction(fn).resolve(this.scope)
+  // }
 
-  public injectWithInput ( fn ) {
+  public inject ( fn ) {
     return (input) => asFunction(fn).inject(
       () => ({ input })
     ).resolve(this.scope)

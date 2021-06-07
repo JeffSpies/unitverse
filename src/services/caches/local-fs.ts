@@ -6,14 +6,13 @@ import queryString from 'query-string'
 import { promises as fs } from 'fs'
 import serializejs from 'serialize-javascript'
 
-export default class Cache extends AbstractCache {
+export class Cache extends AbstractCache {
   name: string
   config: any
   path: string
 
-  constructor(name, config) {
+  constructor(config) {
     super()
-    this.name = name
     this.config = config
     this.path = this.config.path
     // TODO because we can't create directories or do other ansync functions here, we may need a seutp or isReady function

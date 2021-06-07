@@ -1,5 +1,3 @@
-// import { IRunContext } from '../base/runContext' // TODO Move this to class var
-
 export abstract class Task {
   name: string
   engine: any
@@ -15,8 +13,8 @@ export abstract class Task {
     // this.engine.emitter.emit(topicString, message)
   }
 
-  async onPreplan(context) {
-    return true // TODO Maybe change this to Task.continuePreplanning
+  async forWorkflow(workflow: any | undefined) {
+    return this.fn.bind(this)
   }
 
   abstract fn(input?: any): any | Promise<any>
