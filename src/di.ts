@@ -19,6 +19,12 @@ function createTaskFactory( cls:any ) {
   }
 }
 
+function createInjectedTaskFactory( cls:any, scope: any) {
+  return function injectableTaskFactory (config: any) {
+    return asClass(cls).inject(() => ({ config })).resolve(scope)
+  }
+}
+
 const defaultServices = {
   cache: new Cache({
     path: './cache'
@@ -36,7 +42,9 @@ export function createEngine (objs: object = {}): Engine {
     } else if ( obj instanceof Service ) {
       console.log('Registering configured service')
       return asValue(obj)
-    } else if ( obj.prototype instanceof Task ) {
+    } else if ( obj.prototype instanceof Task && obj.inject === true) {
+      return asValue(createInjectedTaskFactory(obj, scope))
+    } else if ( obj.prototype instanceof Task && !obj.inject ) {
       console.log('Registering task')
       return asValue(createTaskFactory(obj))
     } else if ( obj instanceof Task ) {

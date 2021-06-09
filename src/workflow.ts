@@ -6,6 +6,7 @@ import metadata from './util/metadata'
 import { Engine } from './engine'
 import { Service } from './base/service'
 import { Task } from './base/task'
+
 export class Workflow {
   engine: any
   functions: any
@@ -15,7 +16,7 @@ export class Workflow {
     this.functions = []
   }
 
-  private push (fn) {
+  private push (fn: Function | Promise<any>) {
     this.functions.push(fn)
   }
 

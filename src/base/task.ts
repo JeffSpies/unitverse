@@ -1,10 +1,9 @@
 export abstract class Task {
   name: string
   engine: any
+  inject: boolean
 
-  constructor(name?: string, config?: any) {
-    // this.name = name
-    // this.engine = config.engine
+  constructor() {
   }
 
   emit(topic, message) {
