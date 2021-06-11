@@ -1,9 +1,7 @@
 
 import _ from 'lodash'
-import pWaterfall from 'p-waterfall'
 import pMap from 'p-map'
 import { Task } from './base/task'
-import { Observer } from './observer'
 import { Workflow } from './workflow'
 import { asFunction } from 'awilix'
 
@@ -11,7 +9,9 @@ export class Engine {
   builtFunction: any = undefined
   scope: any
   taskObjects: Task[] = []
-  planned: Observer[]
+
+  workflow: Workflow = new Workflow(this)
+  
   wasExitCalled: boolean = false
   exitResult: any = undefined
 
@@ -21,31 +21,25 @@ export class Engine {
     this.scope.register('exit', asFunction(() => exitFn))
   }
 
-  // public inject ( fn ) {
-  //   return asFunction(fn).resolve(this.scope)
-  // }
-
   public inject ( fn ) {
     return (input) => asFunction(fn).inject(
       () => ({ input })
     ).resolve(this.scope)
   }
 
-  public build ( script: any): Function {
+  public async build ( script: any): Promise<Function> {
     // From awilix readme:
     //  Builds an instance of a class (or a function) by injecting dependencies
     //  but without registering it in the container.
     // Allow script to take advantage of DI (could have a config option on this)
     const functionsAndTasks = this.scope.build(script)
 
-    const workflow = new Workflow(this)
-
     for ( let i = 0; i < functionsAndTasks.length; i++ ) {
-      workflow.add(functionsAndTasks[i])
+      await this.workflow.add(functionsAndTasks[i])
     }
 
     if (this.builtFunction === undefined) {
-      this.builtFunction = workflow.compile()
+      this.builtFunction = this.workflow.compile()
     }
     return this.builtFunction
   }
@@ -57,10 +51,9 @@ export class Engine {
    */
   public async run( script:any, input?: any ): Promise<any> {
     if (this.builtFunction === undefined) {
-      this.builtFunction = this.build(script)
+      this.builtFunction = await this.build(script)
     }
-    const result = await this.builtFunction(input)
-    return result
+    return this.builtFunction(input)
   }
 
   public exit ( result: any ) {

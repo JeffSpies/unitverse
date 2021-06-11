@@ -1,8 +1,8 @@
 import { Task } from '../base/task'
-import { IRunContext } from '../base/runContext'
 import { Observer } from '../observer'
 
 import _ from 'lodash'
+import { Workflow } from '../workflow'
 
 interface CheckpointConfig {
   cacheClass: any
@@ -18,26 +18,22 @@ export class Checkpoint extends Task{
   baseName: string
   events: {
   }
+
+  static inject: boolean = true
   
   constructor({
     cache,
-    name,
     config
   }) {
-    super(name, config)
-    
-    this.baseName = name
+    super()
+    this.cacheInstance = cache
+    this.baseName = config.name
 
     const defaults = {
-      cacheOptions: {},
-      nameFunction: undefined
+      nameFunction: (prefix, name) => `${prefix}_${name}`
     }
+
     this.config = !config ? defaults : _.defaultsDeep(config, defaults)
-    
-    this.cacheInstance = cache(
-      'checkpoints', 
-      this.config.cacheOptions
-    )
   }
 
   async isCached() {
@@ -45,10 +41,9 @@ export class Checkpoint extends Task{
       return true
     
     try {
-      this.result = await this.cacheInstance.get(this.name)
+      this.result = await this.cacheInstance.get(this.baseName)
       return true
     } catch (error) {
-      // Check error type
       return false
     }
   }
@@ -59,35 +54,22 @@ export class Checkpoint extends Task{
 
   async uncachedTask(input) {
     input = input instanceof Observer ? input.output : input
-    await this.cacheInstance.set(this.name, input)
+    await this.cacheInstance.set(this.baseName, input)
     return input
   }
 
   async fn (input: any) {
-    if (_.has(this.config, 'nameFunction')) {
-      this.name = this.config.nameFunction(
-        this.baseName,
-        input
-      )
-    }
-
+    this.name = this.config.nameFunction(this.baseName, input)
     if(await this.isCached()) {
       return this.cachedTask()
     }
     return this.uncachedTask(input)
   }
 
-  async forWorkflow(workflow) {
+  async forWorkflow(workflow: Workflow): Promise<Function> {
     if (await this.isCached()) {
       workflow.clear()
     }
     return this.fn.bind(this)
-  }
-
-  async onPreplan(context: IRunContext) {
-    if (await this.isCached()) {
-      return false
-    }
-    return true
   }
 }

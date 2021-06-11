@@ -1,7 +1,10 @@
+import { Workflow } from "../workflow"
+
 export abstract class Task {
   name: string
   engine: any
-  inject: boolean
+  
+  static inject: boolean = false
 
   constructor() {
   }
@@ -12,7 +15,7 @@ export abstract class Task {
     // this.engine.emitter.emit(topicString, message)
   }
 
-  async forWorkflow(workflow: any | undefined) {
+  async forWorkflow(workflow?: Workflow): Promise<Function> {
     return this.fn.bind(this)
   }
 

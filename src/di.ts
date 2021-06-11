@@ -20,32 +20,39 @@ function createTaskFactory( cls:any ) {
 }
 
 function createInjectedTaskFactory( cls:any, scope: any) {
-  return function injectableTaskFactory (config: any) {
-    return asClass(cls).inject(() => ({ config })).resolve(scope)
+  return function injectableTaskFactory (kwargs: any) {
+    // kwargs could be assumed to be config/options
+    // unless there is a variable called config/options
+    return asClass(cls).inject(() => ({ config: kwargs.config })).resolve(scope)
   }
 }
 
-const defaultServices = {
-  cache: new Cache({
-    path: './cache'
-  })
-}
+// const defaultServices = {
+//   cache: () => new Cache({
+//     config: {
+//       path: './cache'
+//     }
+//   })
+// }
 
 export function createEngine (objs: object = {}): Engine {
-  objs = _.defaults(objs, defaultServices)
+  // TODO run each function in defaultServices as needed
+  // objs = _.defaults(objs, defaultServices)
   const scope = rootContainer.createScope()
   // TODO complain about names that are too generic like "conifg", "defaultConfig", "unitverse"
   const userProvidedTasks = _.mapValues(objs, (obj:any) => {
     if ( obj.prototype instanceof Service ) {
-      console.log('Registering service')
-      return asValue(new obj())
+      // A service class
+      // TODO support this, but handle this correctly
+      // return asValue(new obj())
     } else if ( obj instanceof Service ) {
-      console.log('Registering configured service')
+      // An instance of a service
       return asValue(obj)
     } else if ( obj.prototype instanceof Task && obj.inject === true) {
+      // A task class with a static variable 'inject' set to true
       return asValue(createInjectedTaskFactory(obj, scope))
-    } else if ( obj.prototype instanceof Task && !obj.inject ) {
-      console.log('Registering task')
+    } else if ( obj.prototype instanceof Task && !obj.inject) {
+      // A task class with a static variable 'inject' set to false, undefined, etc.
       return asValue(createTaskFactory(obj))
     } else if ( obj instanceof Task ) {
       console.log('Registering configured task')

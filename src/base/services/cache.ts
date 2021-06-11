@@ -1,4 +1,4 @@
-import { Service } from "./service";
+import { Service } from "../service";
 
 export abstract class AbstractCache extends Service {
   public abstract get (key: string): any

@@ -1,4 +1,5 @@
-import { AbstractCache } from '../../base/cache'
+import { AbstractCache } from '../../base/services/cache'
+
 import path from 'path'
 import _ from 'lodash'
 import hash from 'object-hash'
@@ -11,7 +12,7 @@ export class Cache extends AbstractCache {
   config: any
   path: string
 
-  constructor(config) {
+  constructor({ config }) {
     super()
     this.config = config
     this.path = this.config.path
@@ -56,6 +57,9 @@ export class Cache extends AbstractCache {
     * @param key  The key used for storing the cached data.
   */
   async get(key: number | string): Promise <any> {
+    if (key === undefined) {
+      throw Error(`Cache key cannot be undefined`)
+    }
     try {
       const fi = await fs.readFile(
         this.getPath(key),
@@ -83,7 +87,7 @@ export class Cache extends AbstractCache {
       this.serialize({
         serializer: {
           // TODO pull this from package.json?
-          uri: 'https://www.npmjs.com/package/serialize-javascript/v/4.0.0',
+          uri: 'https://www.npmjs.com/package/serialize-javascript/v/5.0.1',
         },
         date: new Date().toISOString(),
         data
