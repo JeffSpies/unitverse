@@ -12,10 +12,9 @@ export class Cache extends AbstractCache {
   config: any
   path: string
 
-  constructor({ config }) {
+  constructor({ path }) {
     super()
-    this.config = config
-    this.path = this.config.path
+    this.path = path
     // TODO because we can't create directories or do other ansync functions here, we may need a seutp or isReady function
   }
 

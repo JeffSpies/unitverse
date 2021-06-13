@@ -1,4 +1,4 @@
-import { createEngine } from './src/di'
+import { createEngine, Engine} from './src/di'
 import { Log } from './src/tasks/log'
 import { chain, _ } from './src/units/lodash'
 import { Task } from './src/base/task'
@@ -22,31 +22,24 @@ class Queue extends Task {
   }
 }
 
-// Task classes could take *args, config?, defaultConfig?
-// defaultConfig could be injected "per module" when added to
-// the engine
-
 (async () => {
-  const engine = createEngine({
+  const result = await Engine.inject({
     cache: new Cache({
-      config: {
-        path: './dist/'
-      }
+      path: './dist/'
     }),
     checkpoint: Checkpoint,
     queue: Queue,
     log: Log
-  })
-  // The items registered in the engine above will be injected into the function passed to run
-  const result = await engine.run(({ log, queue, checkpoint }) => {
+  }).into(({ log, queue, checkpoint }) => {
     return [
       log('hi'),
       () => 1,
       (i) => i + 2,
-      checkpoint({ 
-        config: {
-          name: 'jeff' 
-        }
+      checkpoint({
+        // cache: new Cache({
+        //   path: './dist/cache'
+        // }),
+        name: 'joe'
       }),
     ]
   })

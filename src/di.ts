@@ -1,6 +1,6 @@
 import isPromise from 'p-is-promise'
 
-import { Engine } from './engine'
+import { Engine as EngineBase } from './engine'
 import metadata from './util/metadata'
 import { createContainer, asClass, asValue, asFunction, AwilixContainer, Lifetime} from 'awilix'
 import _ from 'lodash'
@@ -10,6 +10,7 @@ import { Service } from './base/service'
 import { Cache } from './services/caches/local-fs'
 import { Emitter } from './services/emitters/events'
 import { Queue } from './services/queues/p-queue'
+import { parseDependencies } from './util/parameters'
 
 const rootContainer: AwilixContainer = createContainer()
 
@@ -23,7 +24,11 @@ function createInjectedTaskFactory( cls:any, scope: any) {
   return function injectableTaskFactory (kwargs: any) {
     // kwargs could be assumed to be config/options
     // unless there is a variable called config/options
-    return asClass(cls).inject(() => ({ config: kwargs.config })).resolve(scope)
+    // console.log(cls, parseDependencies(cls))
+    const a = asClass(cls)
+    return asClass(cls).inject(() => kwargs).resolve(scope, {
+      allowUnregistered: true
+    })
   }
 }
 
@@ -35,7 +40,7 @@ function createInjectedTaskFactory( cls:any, scope: any) {
 //   })
 // }
 
-export function createEngine (objs: object = {}): Engine {
+export function createEngine (objs: object = {}): EngineBase {
   // TODO run each function in defaultServices as needed
   // objs = _.defaults(objs, defaultServices)
   const scope = rootContainer.createScope()
@@ -76,4 +81,15 @@ export function createEngine (objs: object = {}): Engine {
   })
 
   return scope.resolve('engine')
+}
+
+export class Engine extends EngineBase {
+  static inject (servicesAndTasks) {
+    const engine = createEngine(servicesAndTasks)
+    return {
+      into: function (fn) {
+        return engine.run(fn)
+      }
+    }
+  }
 }

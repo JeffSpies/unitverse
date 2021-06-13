@@ -21,12 +21,6 @@ export class Engine {
     this.scope.register('exit', asFunction(() => exitFn))
   }
 
-  public inject ( fn ) {
-    return (input) => asFunction(fn).inject(
-      () => ({ input })
-    ).resolve(this.scope)
-  }
-
   public async build ( script: any): Promise<Function> {
     // From awilix readme:
     //  Builds an instance of a class (or a function) by injecting dependencies

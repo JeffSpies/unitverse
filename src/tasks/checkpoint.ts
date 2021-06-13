@@ -3,37 +3,32 @@ import { Observer } from '../observer'
 
 import _ from 'lodash'
 import { Workflow } from '../workflow'
+import { AbstractCache } from '../base/services/cache'
 
-interface CheckpointConfig {
-  cacheClass: any
-  cacheOptions?: any
-  nameFunction?: any
-  [key: string]: any
+const defaultNameFunction = (prefix: string, name: string) => `${prefix}_${name}`
+
+export interface CheckpointConfig {
+  cache: AbstractCache
+  name: string
+  nameFunction?: Function
 }
 
 export class Checkpoint extends Task{
-  cacheInstance: any
-  result: any = undefined
-  config: CheckpointConfig
+  cache: AbstractCache
   baseName: string
+  nameFunction: Function
+  result: any = undefined
+  
   events: {
   }
 
   static inject: boolean = true
-  
-  constructor({
-    cache,
-    config
-  }) {
+
+  constructor(opt: CheckpointConfig) {
     super()
-    this.cacheInstance = cache
-    this.baseName = config.name
-
-    const defaults = {
-      nameFunction: (prefix, name) => `${prefix}_${name}`
-    }
-
-    this.config = !config ? defaults : _.defaultsDeep(config, defaults)
+    this.cache = opt.cache
+    this.baseName = opt.name
+    this.nameFunction = opt.nameFunction || defaultNameFunction
   }
 
   async isCached() {
@@ -41,7 +36,7 @@ export class Checkpoint extends Task{
       return true
     
     try {
-      this.result = await this.cacheInstance.get(this.baseName)
+      this.result = await this.cache.get(this.baseName)
       return true
     } catch (error) {
       return false
@@ -54,12 +49,12 @@ export class Checkpoint extends Task{
 
   async uncachedTask(input) {
     input = input instanceof Observer ? input.output : input
-    await this.cacheInstance.set(this.baseName, input)
+    await this.cache.set(this.baseName, input)
     return input
   }
 
   async fn (input: any) {
-    this.name = this.config.nameFunction(this.baseName, input)
+    this.name = this.nameFunction(this.baseName, input)
     if(await this.isCached()) {
       return this.cachedTask()
     }
