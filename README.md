@@ -2,6 +2,9 @@
 
 ## Architecture
 
+Engine
+  <- DIEngine
+
 There are currently four core abstractions:
 - units are functions that take one input and return one output
 - tasks are units that can be configured

@@ -10,30 +10,25 @@ export class Engine {
   scope: any
   taskObjects: Task[] = []
 
-  workflow: Workflow = new Workflow(this)
+  workflow: any
   
   wasExitCalled: boolean = false
   exitResult: any = undefined
 
-  constructor({ scope }) {
-    this.scope = scope
-    const exitFn = this.exit.bind(this)
-    this.scope.register('exit', asFunction(() => exitFn))
+  constructor({ workflow }) {
+    this.workflow = workflow
+    // this.scope = scope
+    // const exitFn = this.exit.bind(this)
+    // this.scope.register('exit', asFunction(() => exitFn))
   }
 
-  public async build ( script: any): Promise<Function> {
-    // From awilix readme:
-    //  Builds an instance of a class (or a function) by injecting dependencies
-    //  but without registering it in the container.
-    // Allow script to take advantage of DI (could have a config option on this)
-    const functionsAndTasks = this.scope.build(script)
-
-    for ( let i = 0; i < functionsAndTasks.length; i++ ) {
-      await this.workflow.add(functionsAndTasks[i])
+  public async build ( functions: any): Promise<Function> {
+    for ( let i = 0; i < functions.length; i++ ) {
+      await this.workflow.add(functions[i])
     }
 
     if (this.builtFunction === undefined) {
-      this.builtFunction = this.workflow.compile()
+      this.builtFunction = this.workflow.fn()
     }
     return this.builtFunction
   }
@@ -50,6 +45,10 @@ export class Engine {
     return this.builtFunction(input)
   }
 
+  /**
+   * 
+   * @param result The result you want to exit with
+   */
   public exit ( result: any ) {
     this.wasExitCalled = true
     this.exitResult = result

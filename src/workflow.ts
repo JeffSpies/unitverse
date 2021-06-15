@@ -3,16 +3,13 @@ import isPromise from 'p-is-promise'
 
 import metadata from './util/metadata'
 
-import { Engine } from './engine'
-import { Service } from './base/service'
 import { Task } from './base/task'
 
-export class Workflow {
-  engine: any
+export class Workflow extends Task {
   functions: any
 
-  constructor (engine: Engine) {
-    this.engine = engine
+  constructor () {
+    super()
     this.functions = []
   }
 
@@ -40,16 +37,16 @@ export class Workflow {
     this.functions = []
   }
 
-  public compile () {
+  public fn () {
     return ( fnArray => {
       return async () => {
         let result: any
         for ( let i = 0; i < fnArray.length; i++ ) {
           const currentFn = fnArray[i]
           result = await currentFn(result)
-          if( this.engine.wasExitCalled ) {
-            return this.engine.exitResult
-          }
+          // if( this.engine.wasExitCalled ) {
+          //   return this.engine.exitResult
+          // }
         }
         return result
       }
