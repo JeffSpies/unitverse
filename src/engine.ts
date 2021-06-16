@@ -11,15 +11,9 @@ export class Engine {
   taskObjects: Task[] = []
 
   workflow: any
-  
-  wasExitCalled: boolean = false
-  exitResult: any = undefined
 
   constructor({ workflow }) {
     this.workflow = workflow
-    // this.scope = scope
-    // const exitFn = this.exit.bind(this)
-    // this.scope.register('exit', asFunction(() => exitFn))
   }
 
   public async build ( functions: any): Promise<Function> {
@@ -50,8 +44,6 @@ export class Engine {
    * @param result The result you want to exit with
    */
   public exit ( result: any ) {
-    this.wasExitCalled = true
-    this.exitResult = result
   }
 
   /**
