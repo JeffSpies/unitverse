@@ -19,7 +19,7 @@ function createTaskFactory( cls:any ) {
   return function taskFactory (input:any) {
     return new cls(input)
   }
-}
+} 
 
 function createInjectedTaskFactory( cls:any, scope: any) {
   return function injectableTaskFactory (kwargs: any) {

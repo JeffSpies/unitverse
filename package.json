@@ -26,6 +26,7 @@
     "serialize-javascript": "^5.0.1"
   },
   "scripts": {
-    "start": "ts-node index.ts"
+    "start": "ts-node index.ts",
+    "di": "ts-node diindex.ts"
   }
 }
