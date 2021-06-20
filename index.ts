@@ -5,42 +5,40 @@ import { Task } from './src/base/task'
 
 import { Cache } from './src/services/caches/local-fs'
 import { Checkpoint } from './src/tasks/checkpoint'
-import { Workflow } from './src/workflow'
+import { Workflow } from './src/tasks/workflow'
+import { DebugWorkflow} from './src/tasks/debug-workflow'
 
 class Queue extends Task {
   static inject = true
   cache: any
   config: any
 
-  constructor({ cache, config }) {
+  constructor({ cache }) {
     super()
     this.cache = cache
-    this.config = config
+    console.log('constructing cache', this.cache)
   }
 
   fn(input: any[]) {
+    console.log('calling cache', this.cache)
     return input
   }
 }
 
 (async () => {
   const result = await Engine.inject({
-    cache: new Cache({
-      path: './dist/'
-    }),
+    cache: [ Cache, { path: './dist/' } ],
     checkpoint: Checkpoint,
     queue: Queue,
-    log: Log
-  }).into(({ log, queue, checkpoint }) => [
-    log('hi'),
-    () => 1,
-    (i) => i + 2,
-    checkpoint({
-      // cache: new Cache({
-      //   path: './dist/cache'
-      // }),
-      name: 'joe'
-    })
-  ])
+    log: Log,
+    workflow: DebugWorkflow
+  }).into(({ log, queue, checkpoint }) => {
+    return [
+      log('jeff'),
+      () => 1,
+      queue(),
+      (i) => i + 2
+    ]
+  })
   console.log('Result', result)
 })()

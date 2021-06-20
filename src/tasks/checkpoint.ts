@@ -2,7 +2,7 @@ import { Task } from '../base/task'
 import { Observer } from '../observer'
 
 import _ from 'lodash'
-import { Workflow } from '../workflow'
+import { Workflow } from './workflow'
 import { AbstractCache } from '../base/services/cache'
 
 const defaultNameFunction = (prefix: string, name: string) => `${prefix}_${name}`

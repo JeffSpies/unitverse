@@ -2,7 +2,7 @@
 import _ from 'lodash'
 import pMap from 'p-map'
 import { Task } from './base/task'
-import { Workflow } from './workflow'
+import { Workflow } from './tasks/workflow'
 import { asFunction } from 'awilix'
 
 export class Engine {
@@ -13,7 +13,7 @@ export class Engine {
   workflow: any
 
   constructor({ workflow }) {
-    this.workflow = workflow
+    this.workflow = new Workflow()
   }
 
   public async build ( functions: any): Promise<Function> {

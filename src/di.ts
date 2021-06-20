@@ -1,114 +1,69 @@
 import isPromise from 'p-is-promise'
 
 import { Engine as EngineBase } from './engine'
-import metadata from './util/metadata'
-import { createContainer, asClass, asValue, asFunction, AwilixContainer, Lifetime} from 'awilix'
 import _ from 'lodash'
 import { Task } from './base/task'
 import { Service } from './base/service'
 
-import { Cache } from './services/caches/local-fs'
-import { Emitter } from './services/emitters/events'
-import { Queue } from './services/queues/p-queue'
-import { parseDependencies } from './util/parameters'
-import { Workflow } from './workflow'
+import { Workflow } from './tasks/workflow'
 
-const rootContainer: AwilixContainer = createContainer()
+import {Container} from './util/di/'
 
-function createTaskFactory( cls:any ) {
-  return function taskFactory (input:any) {
-    return new cls(input)
-  }
-} 
-
-function createInjectedTaskFactory( cls:any, scope: any) {
-  return function injectableTaskFactory (kwargs: any) {
-    // kwargs could be assumed to be config/options
-    // unless there is a variable called config/options
-    // console.log(cls, parseDependencies(cls))
-    return asClass(cls).inject(() => kwargs).resolve(scope, {
-      allowUnregistered: true // this option was added in my fork of awilix
+function register(scope, name: string, cls, defaults = {}) {
+  if ( cls.prototype instanceof Service ) {
+    return scope.registerClass(name, cls, defaults, {
+      resolve: 'instantiate'
     })
+  } else if ( cls.prototype instanceof Task) {
+    return scope.registerClass(name, cls, defaults, {
+      resolve: 'wrap'
+    })
+  } else if ( _.isFunction(cls) ) {
+    return scope.registerFunction(name, cls, defaults, {
+    })
+  } else {
+    console.error('Trying to register an inappropritely typed service or task')
   }
-}
-
-// const defaultServices = {
-//   cache: () => new Cache({
-//     config: {
-//       path: './cache'
-//     }
-//   })
-// }
-
-interface EngineInput {
-  [key: string]: any
 }
 
 export class Engine extends EngineBase {
   scope: any
 
-  constructor({ scope, workflow, ...deps }) {
+  constructor({ scope, workflow }) {
     super({ workflow })
     this.scope = scope
-    this.registerDependencies(deps)
   }
 
-  public async build (script: any): Promise<Function> {
-    // From awilix readme:
-    //  Builds an instance of a class (or a function) by injecting dependencies
-    //  but without registering it in the container.
-    // Allow script to take advantage of DI (could have a config option on this)
-    const functionsAndTasks = this.scope.build(script)
-    return super.build(functionsAndTasks)
+  register(name: string, cls, defaults = {}) {
+    return register(this.scope, name, cls, defaults)
   }
 
-  registerDependencies(deps: EngineInput) {
-    const diDeps  = _.mapValues(deps, (obj:any) => {
-      if ( obj.prototype instanceof Service ) {
-        // A service class
-        // TODO support this, but handle this correctly
-        return asClass(obj)
-      } else if ( obj instanceof Service ) {
-        // An instance of a service
-        return asValue(obj)
-      } else if ( obj.prototype instanceof Task && obj.inject === true) {
-        // A task class with a static variable 'inject' set to true
-        return asValue(createInjectedTaskFactory(obj, this.scope))
-      } else if ( obj.prototype instanceof Task && !obj.inject) {
-        // A task class with a static variable 'inject' set to false, undefined, etc.
-        return asValue(createTaskFactory(obj))
-      } else if ( obj instanceof Task ) {
-        console.log('Registering configured task')
-        return asValue(obj)
-      } else if ( isPromise(obj) ) {
-        console.log('Registering promise')
-        return asValue(obj)
-      } else if ( _.isFunction(obj) ) {
-        console.log('Registering function')
-        return asValue(obj)
-      } else {
-        console.error('Trying to register an inappropritely typed service or task')
-      }
-    })
-    this.scope.register(diDeps)
-  }
-
-  static inject (input: EngineInput) {
+  static inject (dependencies) {
     return {
       into: async function (fn: Function): Promise<any> {
-        const scope = rootContainer.createScope()
-        scope.register({
-          workflow: asClass(Workflow),
-          scope: asValue(scope)
+        const scope = new Container()
+        
+        dependencies = {
+          workflow: Workflow,
+          ...dependencies
+        }
+
+        for(const [key, value] of Object.entries(dependencies)) {
+          if (_.isArray(value)) {
+            const [cls, args, opts ] = value
+            register(scope, key, cls, args || {})
+          } else {
+            register(scope, key, value)
+          }
+        }
+
+        const engine = scope.asClass(Engine, { scope }, {
+          resolve: 'instantiate'
         })
 
-        // The second argument to Reflect.construct must be array-like
-        // const engine = asClass(Engine).resolve(scope) 
-        const engine: Engine = asClass(Engine).inject(
-          () => (input)
-        ).resolve(scope)
-
-        const result = await engine.run(fn)
+        const injectedFunction = engine.scope.asFunction(fn)
+        const fnList = injectedFunction()
+        const result = await engine.run(fnList)
         await engine.close()
         return result
       }

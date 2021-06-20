@@ -1,9 +1,9 @@
 import _, { isObject } from 'lodash'
 import isPromise from 'p-is-promise'
 
-import metadata from './util/metadata'
+import metadata from '../util/metadata'
 
-import { Task } from './base/task'
+import { Task } from '../base/task'
 
 export class Workflow extends Task {
   functions: any
@@ -13,7 +13,7 @@ export class Workflow extends Task {
     this.functions = []
   }
 
-  private push (fn: Function | Promise<any>) {
+  push (fn: Function | Promise<any>) {
     this.functions.push(fn)
   }
 

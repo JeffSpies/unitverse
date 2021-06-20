@@ -1,4 +1,4 @@
-import { Workflow } from "../workflow"
+import { Workflow } from "../tasks/workflow"
 
 export abstract class Task {
   name: string
