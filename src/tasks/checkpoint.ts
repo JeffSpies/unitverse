@@ -7,7 +7,7 @@ import { AbstractCache } from '../base/services/cache'
 
 const defaultNameFunction = (prefix: string, name: string) => `${prefix}_${name}`
 
-export interface CheckpointConfig {
+export interface CheckpointOptions {
   cache: AbstractCache
   name: string
   nameFunction?: Function
@@ -24,7 +24,7 @@ export class Checkpoint extends Task{
 
   static inject: boolean = true
 
-  constructor(opt: CheckpointConfig) {
+  constructor(opt: CheckpointOptions) {
     super()
     this.cache = opt.cache
     this.baseName = opt.name

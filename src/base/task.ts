@@ -2,14 +2,26 @@ import { Workflow } from "../tasks/workflow"
 
 import functionName from '../util/function-name'
 
+export interface TaskOptions {
+  name?: string
+}
+
+export const TaskDefaults = {
+  name: undefined
+}
+
 export abstract class Task {
   name: string
-  engine: any
+  engine: any // todo do we need this
   
   static inject: boolean = false
 
-  constructor() {
-    this.name = functionName(this.constructor)
+  constructor(opts?: TaskOptions) {
+    opts = {
+      ...TaskDefaults,
+      ...opts
+    }
+    this.name = opts.name || functionName(this.constructor)
   }
 
   emit(topic, message) {

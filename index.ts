@@ -30,7 +30,7 @@ class Queue extends Task {
     checkpoint: Checkpoint,
     queue: Queue,
     log: Log,
-    wrapper: [ Wrapper, { shouldLog: false }]
+    wrapper: [ Wrapper, { shouldLog: false } ]
   }).into(({ log, queue, checkpoint }) => {
     return [
       log('jeff'),
