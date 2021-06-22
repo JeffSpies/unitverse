@@ -13,7 +13,7 @@ export class Engine {
   workflow: any
 
   constructor({ workflow }) {
-    this.workflow = new Workflow()
+    this.workflow = workflow()
   }
 
   public async build ( functions: any): Promise<Function> {

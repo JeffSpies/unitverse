@@ -12,14 +12,20 @@ import {Container} from './util/di/'
 function register(scope, name: string, cls, defaults = {}) {
   if ( cls.prototype instanceof Service ) {
     return scope.registerClass(name, cls, defaults, {
-      resolve: 'instantiate'
+      resolve: 'instantiate',
+      inject: true,
+      lazy: true
     })
   } else if ( cls.prototype instanceof Task) {
     return scope.registerClass(name, cls, defaults, {
-      resolve: 'wrap'
+      resolve: 'wrap',
+      inject: true,
+      lazy: true
     })
   } else if ( _.isFunction(cls) ) {
     return scope.registerFunction(name, cls, defaults, {
+      inject: true,
+      lazy: true
     })
   } else {
     console.error('Trying to register an inappropritely typed service or task')
@@ -38,7 +44,7 @@ export class Engine extends EngineBase {
     return register(this.scope, name, cls, defaults)
   }
 
-  static inject (dependencies) {
+  static inject (dependencies: any) {
     return {
       into: async function (fn: Function): Promise<any> {
         const scope = new Container()

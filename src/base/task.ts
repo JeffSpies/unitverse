@@ -1,5 +1,7 @@
 import { Workflow } from "../tasks/workflow"
 
+import functionName from '../util/function-name'
+
 export abstract class Task {
   name: string
   engine: any
@@ -7,6 +9,7 @@ export abstract class Task {
   static inject: boolean = false
 
   constructor() {
+    this.name = functionName(this.constructor)
   }
 
   emit(topic, message) {
@@ -16,7 +19,9 @@ export abstract class Task {
   }
 
   async forWorkflow(workflow?: Workflow): Promise<Function> {
-    return this.fn.bind(this)
+    const bound = this.fn.bind(this)
+    Object.defineProperty(bound, "name", { value: this.name })
+    return bound
   }
 
   abstract fn(input?: any): any | Promise<any>

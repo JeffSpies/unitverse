@@ -65,6 +65,6 @@ export class Checkpoint extends Task{
     if (await this.isCached()) {
       workflow.clear()
     }
-    return this.fn.bind(this)
+    return super.forWorkflow(workflow)
   }
 }

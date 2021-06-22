@@ -5,8 +5,7 @@ import { Task } from './src/base/task'
 
 import { Cache } from './src/services/caches/local-fs'
 import { Checkpoint } from './src/tasks/checkpoint'
-import { Workflow } from './src/tasks/workflow'
-import { DebugWorkflow} from './src/tasks/debug-workflow'
+import { Wrapper } from './src/tasks/wrapper'
 
 class Queue extends Task {
   static inject = true
@@ -31,11 +30,11 @@ class Queue extends Task {
     checkpoint: Checkpoint,
     queue: Queue,
     log: Log,
-    workflow: DebugWorkflow
+    wrapper: [ Wrapper, { shouldLog: false }]
   }).into(({ log, queue, checkpoint }) => {
     return [
       log('jeff'),
-      () => 1,
+      function start () { return 1 },
       queue(),
       (i) => i + 2
     ]
