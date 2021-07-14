@@ -4,6 +4,9 @@ import { chain, _ } from './src/units/lodash'
 import { Task } from './src/base/task'
 
 import { Cache } from './src/services/caches/local-fs'
+import { Emitter } from './src/services/emitters/events'
+import { Dashboard } from './src/services/dashboard'
+
 import { Checkpoint } from './src/tasks/checkpoint'
 import { Wrapper } from './src/tasks/wrapper'
 
@@ -26,12 +29,16 @@ class Queue extends Task {
 
 (async () => {
   const result = await Engine.inject({
+    // Services
     cache: [ Cache, { path: './dist/' } ],
+    // dashboard: Dashboard,
+    emitter: Emitter,
+    // Tasks
     checkpoint: Checkpoint,
     queue: Queue,
     log: Log,
     wrapper: [ Wrapper, { shouldLog: false } ]
-  }).into(({ log, queue, checkpoint }) => {
+  }).into(({ log, queue, checkpoint, dashboard }) => {
     return [
       log('jeff'),
       function start () { return 1 },

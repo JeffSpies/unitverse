@@ -1,32 +1,36 @@
 import isPromise from 'p-is-promise'
+import _ from 'lodash'
 
 import { Engine as EngineBase } from './engine'
-import _ from 'lodash'
 import { Task } from './base/task'
 import { Service } from './base/service'
-
 import { Workflow } from './tasks/workflow'
-
 import {Container} from './util/di/'
 
-function register(scope, name: string, cls, defaults = {}) {
+function register(scope, name: string, cls, defaults = {}, opts={}) {
   if ( cls.prototype instanceof Service ) {
-    return scope.registerClass(name, cls, defaults, {
+    opts = {
       resolve: 'instantiate',
       inject: true,
-      lazy: true
-    })
+      lazy: true,
+      ...opts
+    }
+    return scope.registerClass(name, cls, defaults, opts)
   } else if ( cls.prototype instanceof Task) {
-    return scope.registerClass(name, cls, defaults, {
+    opts = {
       resolve: 'wrap',
       inject: true,
-      lazy: true
-    })
+      lazy: true,
+      ...opts
+    }
+    return scope.registerClass(name, cls, defaults, opts)
   } else if ( _.isFunction(cls) ) {
-    return scope.registerFunction(name, cls, defaults, {
+    opts = {
       inject: true,
-      lazy: true
-    })
+      lazy: true,
+      ...opts
+    }
+    return scope.registerFunction(name, cls, defaults, opts)
   } else {
     console.error('Trying to register an inappropritely typed service or task')
   }
@@ -40,8 +44,8 @@ export class Engine extends EngineBase {
     this.scope = scope
   }
 
-  register(name: string, cls, defaults = {}) {
-    return register(this.scope, name, cls, defaults)
+  register(name: string, cls, defaults = {}, opts={}) {
+    return register(this.scope, name, cls, defaults, opts)
   }
 
   static inject (dependencies: any) {
@@ -57,7 +61,7 @@ export class Engine extends EngineBase {
         for(const [key, value] of Object.entries(dependencies)) {
           if (_.isArray(value)) {
             const [cls, args, opts ] = value
-            register(scope, key, cls, args || {})
+            register(scope, key, cls, args || {}, opts)
           } else {
             register(scope, key, value)
           }
