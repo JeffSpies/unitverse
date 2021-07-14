@@ -14,9 +14,8 @@ import files from '../src/units/files'
     checkpoint: Checkpoint
   }).into(({ checkpoint }) => [
     () => http.get('https://smile.amazon.com/s?k=holy+stone+drone+gps&i=warehouse-deals&ref=nb_sb_noss_2'),
-    // files.writeFile({ path: './1.html' }),
     checkpoint({
-      name: 'holy-stone'
+      name: 'holy-stone2'
     }),
     cheerio.select('[data-component-type="s-search-result"]', (item, $, $html, _) => {
       return [

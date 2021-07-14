@@ -1,21 +1,32 @@
-import { AbstractCache } from '../../base/services/cache'
-
 import path from 'path'
 import _ from 'lodash'
 import hash from 'object-hash'
-import queryString from 'query-string'
 import { promises as fs } from 'fs'
 import serializejs from 'serialize-javascript'
+import { add, isAfter, parseISO, Duration} from 'date-fns'
+import { Service } from '../../base/service'
+import { AbstractCache } from '../../base/services/cache'
 
-export class Cache extends AbstractCache {
-  name: string
-  config: any
+export interface CacheOptions {
+  expiration?: Duration
+  hashAlgo?: string
   path: string
+}
 
-  constructor({ path }) {
+export class Cache extends AbstractCache{
+  options: CacheOptions
+
+  constructor({ expiration, hashAlgo, path}: CacheOptions) {
     super()
-    this.path = path
-    // TODO because we can't create directories or do other ansync functions here, we may need a seutp or isReady function
+    this.options = {
+      expiration: undefined,
+      hashAlgo: 'sha1',
+      ... {
+        expiration,
+        hashAlgo,
+        path
+      }
+    }
   }
 
   serialize(data: any): string {
@@ -26,61 +37,49 @@ export class Cache extends AbstractCache {
     return eval(`(${data})`)
   }
 
-  preProcessInput(input: any): any {
-    // TODO make inputProcessor a config option
-    const type = _.get(this.config, 'type')
-    let inputProcessor
-    if(type === 'url') {
-      inputProcessor = queryString.parseUrl
-    } else {
-      inputProcessor = (i:any): any => i
-    }
-    return inputProcessor(input)
-  }
-
-  generateKey(input: any): string {
-    return hash(this.preProcessInput(input), {
-      algorithm: 'sha1'
+  hashContent(input: any): string {
+    return hash(input, {
+      algorithm: this.options.hashAlgo
     })
   }
 
-  getPath(key: number | string): string {
+  private getPath(key: number | string): string {
     if(_.isNumber(key)) {
       key = _.toString(key)
     }
-    return path.join(this.path, `${key}.json`) 
+    return path.join(this.options.path, `${key}.json`) 
   }
-
 
   /**
     * @param key  The key used for storing the cached data.
   */
-  async get(key: number | string): Promise <any> {
-    if (key === undefined) {
-      throw Error(`Cache key cannot be undefined`)
-    }
+  public async get(key: number | string): Promise <any> {
+    let fi
     try {
-      const fi = await fs.readFile(
+      fi = await fs.readFile(
         this.getPath(key),
         'utf-8'
       )
-      return this.deserialize(fi).data
     } catch (err) {
       throw Error('Cache not found')
     }
+
+    const cachedObject = this.deserialize(fi)
+
+    const now = new Date()
+    if (
+      this.options.expiration 
+      && isAfter(now, add(parseISO(cachedObject.date), this.options.expiration))
+    ) {
+      await this.delete(key)
+      throw Error('Cache not found')
+    }
+    
+    return cachedObject.data
   }
 
-  async set (key: any): Promise<void>
-  async set (key: number | string, data: any): Promise<void>
-  async set (key: any, data?: any): Promise<void> {
-    if (data === undefined) {
-      // When no data is passed in, assume the key is the data to be cached, thus hash it for use as the key
-      // TODO handle or disallow actual undefined results (convert to null)
-      data = key
-      key = this.generateKey(key)
-    }
-
-    await fs.mkdir(this.path, { recursive: true })
+  public async set (key: number | string, data: any): Promise<void> {
+    await fs.mkdir(this.options.path, { recursive: true })
     return fs.writeFile(
       this.getPath(key),
       this.serialize({
@@ -92,5 +91,18 @@ export class Cache extends AbstractCache {
         data
       })
     )
+  }
+
+  public async hashAndSet(data: any) {
+    const key = this.hashContent(data)
+    this.set(key, data)
+  }
+
+  public async delete (key:any): Promise<void> {
+    await fs.rm(this.getPath(key))
+  }
+
+  public async clear (): Promise<void> {
+    await fs.rm(this.options.path, { recursive: true })
   }
 }

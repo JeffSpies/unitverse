@@ -1,11 +1,9 @@
 import { Task } from '../base/task'
-import { Observer } from '../observer'
-
 import _ from 'lodash'
 import { Workflow } from './workflow'
 import { AbstractCache } from '../base/services/cache'
 
-const defaultNameFunction = (prefix: string, name: string) => `${prefix}_${name}`
+const defaultNameFunction = (name: string) => `${name}`
 
 export interface CheckpointOptions {
   cache: AbstractCache
@@ -32,9 +30,9 @@ export class Checkpoint extends Task{
   }
 
   async isCached() {
+    // todo add isResultSet to allow for undefined as a result
     if(this.result !== undefined)
       return true
-    
     try {
       this.result = await this.cache.get(this.baseName)
       return true
@@ -48,13 +46,12 @@ export class Checkpoint extends Task{
   }
 
   async uncachedTask(input) {
-    input = input instanceof Observer ? input.output : input
     await this.cache.set(this.baseName, input)
     return input
   }
 
   async fn (input: any) {
-    this.name = this.nameFunction(this.baseName, input)
+    this.name = this.nameFunction(this.baseName)
     if(await this.isCached()) {
       return this.cachedTask()
     }
