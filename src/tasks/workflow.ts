@@ -57,10 +57,10 @@ export class Workflow extends Task {
     this.functions = []
   }
 
-  public fn () {
-    return ( fnArray => {
-      return async function () {
-        let result: any
+  public fn (): Function {
+    return ( (fnArray) => {
+      return async function (input) {
+        let result: any = input
         for ( let i = 0; i < fnArray.length; i++ ) {
           const currentFn = fnArray[i]
           result = await currentFn(result)
@@ -70,6 +70,6 @@ export class Workflow extends Task {
         }
         return result
       }
-    })( this.functions )
+    })( this.functions)
   }
 }

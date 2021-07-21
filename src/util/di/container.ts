@@ -2,9 +2,12 @@ import _ from 'lodash'
 import { asClass, ClassOptions } from './resolvers/class'
 import { asFunction, FunctionOptions } from './resolvers/function'
 
+const RESERVED_WORDS = ['constructor', 'length']
+
 const ClassOptionDefaults: ClassOptions = {
   inject: true,
   isLazy: true,
+  resolve: 'proxy',
   defaults: {}
 }
 
@@ -31,12 +34,23 @@ export class Container {
     this.registry = <Registry>{}
   }
 
+  private isReserved (name) {
+    if (name in RESERVED_WORDS) {
+      return true
+    }
+    return false
+  }
+
   private register(
     name: string,
     obj: any,
     opts,
     as
-  ) {
+  ): boolean {
+    if (this.isReserved(name)) {
+      return false
+    }
+
     const compiled = opts.isLazy ?
       () => as(this, obj, opts) :
       as(this, obj, opts)
@@ -45,9 +59,15 @@ export class Container {
       obj: compiled,
       opts
     }
+
+    return true
   }
 
   public resolve(name: string) {
+    if (this.isReserved(name)) {
+      return undefined
+    }
+
     const stored = this.registry[name]
     if (!stored) {
       return undefined
@@ -56,9 +76,10 @@ export class Container {
       return this.resolve(stored.obj)
     }
     if (stored.opts.isLazy) {
+      // Let's undo the laziness
       this.registry[name].obj = stored.obj()
       this.registry[name].opts.isLazy = false
-      return this.registry[name].obj
+      return stored.obj
     }
     return stored.obj
   }
@@ -71,6 +92,8 @@ export class Container {
       isAlias: true,
       obj: target
     }
+    // todo use this.register
+    return true
   }
 
   public registerClass(
@@ -84,7 +107,7 @@ export class Container {
       defaults,
       ...opts
     }
-    this.register(
+    return this.register(
       name,
       obj,
       opts,
@@ -103,7 +126,7 @@ export class Container {
       defaults,
       ...opts
     }
-    this.register(
+    return this.register(
       name,
       obj,
       opts,
@@ -112,7 +135,9 @@ export class Container {
   }
 
   public registerValue(name: string, obj) {
+    // todo use this.register
     this.registry[name] = <StoredObject>{ obj }
+    return true
   }
 
   public asClass(cls: any, defaults: any = {}, opts: ClassOptions) {

@@ -5,14 +5,14 @@ import { Engine as EngineBase } from './engine'
 import { Task } from './base/task'
 import { Service } from './base/service'
 import { Workflow } from './tasks/workflow'
-import {Container} from './util/di/'
+import { Container } from './util/di/'
 
 function register(scope, name: string, cls, defaults = {}, opts={}) {
   if ( cls.prototype instanceof Service ) {
     opts = {
       resolve: 'instantiate',
       inject: true,
-      lazy: true,
+      isLazy: true,
       ...opts
     }
     return scope.registerClass(name, cls, defaults, opts)
@@ -20,14 +20,14 @@ function register(scope, name: string, cls, defaults = {}, opts={}) {
     opts = {
       resolve: 'wrap',
       inject: true,
-      lazy: true,
+      isLazy: true,
       ...opts
     }
     return scope.registerClass(name, cls, defaults, opts)
   } else if ( _.isFunction(cls) ) {
     opts = {
       inject: true,
-      lazy: true,
+      isLazy: true,
       ...opts
     }
     return scope.registerFunction(name, cls, defaults, opts)

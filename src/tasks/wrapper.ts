@@ -14,21 +14,18 @@ export class Wrapper extends Task {
     this.emitter = emitter
   }
 
-  public fn (input) {
-    return (async (input) => {
-      this.emitter.emit('task:input', `Processing ${input}`)
-      const time = process.hrtime()
-      if (this.shouldLog) {
-        console.log('Function', this.name, 'input', input)
-      }
-      const result = await this.func(input)
-      const diff = process.hrtime(time)
-      if (this.shouldLog) {
-        console.log(`${this.name} took ${(diff[0] * 1e9 + diff[1])} ns`)
-        console.log(`${this.name} took ${(diff[0] * 1e9 + diff[1]) * 1e-6} ms`)
-      }
-      this.emitter.emit('task:output', `Processing ${input}`)
-      return result
-    })(input)
+  public async fn (input) {
+    const time = process.hrtime()
+    if (this.shouldLog) {
+      console.log('task:input', this.name, 'input', input)
+    }
+    const result = await this.func(input)
+    const diff = process.hrtime(time)
+    if (this.shouldLog) {
+      console.log(`${this.name} took ${(diff[0] * 1e9 + diff[1])} ns`)
+      console.log(`${this.name} took ${(diff[0] * 1e9 + diff[1]) * 1e-6} ms`)
+      console.log('task:output', this.name, `${result}`)
+    }
+    return result
   }
 }

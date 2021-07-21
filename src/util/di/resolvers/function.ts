@@ -23,8 +23,9 @@ export function asFunction(
     if (args.length === 0 ) {
       args = [{}]
     }
-    if (_.isPlainObject(args[0])) {
-      args[0] = new Proxy(args[0], {
+    const diObjectIndex = args.length - 1
+    if (_.isPlainObject(args[diObjectIndex])) {
+      args[diObjectIndex] = new Proxy(args[diObjectIndex], {
         get: function (obj, prop) {
           const propString = <string>prop
           if (Object.keys(obj).includes(propString)) {
@@ -33,7 +34,8 @@ export function asFunction(
           if (Object.keys(opts.defaults).includes(propString)) {
             return opts.defaults[propString]
           }
-          return this.resolve(propString)
+          const resolved = this.resolve(propString)
+          return resolved
         }.bind(container)
       })
     }
