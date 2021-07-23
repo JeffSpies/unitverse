@@ -10,19 +10,19 @@ export class Engine {
   scope: any
   taskObjects: Task[] = []
 
-  workflow: any
+  wrappedWorkflow: any
 
   constructor({ workflow }) {
-    this.workflow = workflow()
+    this.wrappedWorkflow = workflow
   }
 
   public async build ( functions: any): Promise<Function> {
-    for ( let i = 0; i < functions.length; i++ ) {
-      await this.workflow.add(functions[i])
-    }
-
     if (this.builtFunction === undefined) {
-      this.builtFunction = this.workflow.fn()
+      const workflow = await this.wrappedWorkflow(functions)
+      await workflow.setup()
+
+      // Make a copy of the function
+      this.builtFunction = workflow.fn.bind(workflow)
     }
     return this.builtFunction
   }

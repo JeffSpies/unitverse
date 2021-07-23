@@ -30,7 +30,9 @@ export abstract class Task {
     // this.engine.emitter.emit(topicString, message)
   }
 
-  async forWorkflow(workflow?: Workflow): Promise<Function> {
+  requiresWorkflowInput: boolean = false
+
+  async forWorkflow(workflow?: Workflow, workflowInput?): Promise<Function> {
     const bound = this.fn.bind(this)
     Object.defineProperty(bound, "name", { value: this.name })
     return bound

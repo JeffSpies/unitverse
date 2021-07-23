@@ -1,0 +1,38 @@
+// (n:number) => n+1,
+      // (n) => [ {'count': n}, {'count': 30}],
+      // ({ engine }) => { return (i) => {console.log(engine); return i }},
+      // chain()
+      //   .map('count')
+      //   .value(),
+      // _.sum,
+      // log(input => `Result: ${input}`),
+      // log('done!')
+
+        const warehouse = 'bbn=10158976011'
+
+  const getCategories = ({ checkpoint }) => [
+    () => http.get('https://www.amazon.com/b?node=10158976011'),
+    checkpoint({
+      name: 'categories'
+    }),
+    cheerio.select('ul.a-unordered-list > * > span.a-list-item', (item, $, $html, _) => {
+      return {
+        url: $('[href]').attr('href'),
+        title: $('[dir="auto"]').text()
+      }
+    })
+  ]
+
+  const search = ({ checkpoint }) => [
+    () => 'https://www.amazon.com/s?i=lawngarden&bbn=2972638011&rh=n%3A2972638011%2Cp_85%3A2470955011%2Cp_n_condition-type%3A6358198011&s=price-asc-rank&dc',
+    (i) => http.get(i),
+    checkpoint({
+      name: 'test'
+    }),
+    cheerio.select('li.a-disabled:contains("400")', (item, $, $html, _) => item ),
+    (i) => {
+      if (i.length > 0) {
+ 
+      }
+    }
+  ]

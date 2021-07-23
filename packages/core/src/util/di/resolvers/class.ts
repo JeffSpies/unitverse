@@ -25,7 +25,7 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
         // If the number of arguments in the constructor is greater than those
         //  provided, fill in undefined until we get to the assumed injectable
         // options parameter at the end
-        if (target.length > args.length) {
+        if (target.length > ( args.length - 1)) {
           _.times(target.length - args.length - 1, () => {
             args.push(undefined)
           })
@@ -66,13 +66,13 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
   switch (opts.resolve) {
     case 'proxy': {
       // A proxied class will return the class
-      return proxy
+      return () => proxy
     }
     case 'instantiate': {
-      return new proxy()
+      return () => new proxy()
     }
     case 'wrap': {
-      return (...args: any[]) => new proxy(...args)
+      return (...args: any[]) => () => new proxy(...args)
     }
   }
 }
