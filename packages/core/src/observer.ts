@@ -125,7 +125,7 @@ export class Observer {
         return output
     } catch (error) {
       if (config.debugOnError && !config.debug) {
-        console.log('Received error; rerunning under debug mode')
+        console.debug('Received error; rerunning under debug mode')
         return this.run(input, _.assign(config, { debug: true } ))
       }
 
@@ -133,14 +133,14 @@ export class Observer {
       this.errorMessage = error.message
 
       if(!config.debug) {
-        console.log(
+        console.debug(
           `${error.message}\n` +
           this.filterLogs({
             include: ['name', 'input', 'output', 'args']
           })
         )
       } else {
-        console.log(
+        console.debug(
           `${error.message}\n` +
           this.filterLogs({
             include: ['name', 'input', 'output', 'args']
@@ -159,5 +159,4 @@ export class Observer {
 //     i => { throw Error('hi') }
 //   ])
 //   const result = await o.run(1, true)
-//   console.log(result.error)
 // })()

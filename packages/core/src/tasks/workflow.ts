@@ -12,70 +12,96 @@ interface Options {
 }
 
 export class Workflow extends Task {
-  constructorFunctions: (Task | Function)[]
-  wrappedFunctions: any
+  originalTasks: (Task | Function)[]
+
+  wrappedTasks: any
   wrapperTask: any
+
+  input: any
 
   constructor (tasks = [], options: Options = {}) {
     super()
+    
+    this.originalTasks = tasks
+    this.wrappedTasks = []
+
     this.wrapperTask = options.wrapper
-    this.constructorFunctions = _.isArray(tasks) ? tasks : [ tasks ]
-    this.wrappedFunctions = []
   }
 
-  private push (fn: Function | Promise<any>) {
-    if (this.wrapperTask) {
-      const task = this.wrapperTask({ fn })
-      
-      // Create new function
-      fn = task.fn.bind(task)
-    }
-    this.wrappedFunctions.push(fn)
-  }
-
-  private async add (obj: any | any[], workflowInput?: any): Promise<boolean> {
+  private async add (obj: Function | Task | (Function | Task)[]): Promise<boolean> {
+    // if (_.isFunction(obj)) {
+    //   const result = await obj()
+    //   if (_.isArray(result)) {
+    //     return await this.addArray(result)
+    //   } else {
+    //     // todo maybe we shoudln't allow this, I don't know
+    //     return await this.addFunctionOrTask(obj)
+    //   }
+    // }
     if (_.isArray(obj)) {
-      for (let i = 0; i < obj.length; i++) {
-        const individualFunction = obj[i]
-        await this.add(individualFunction, workflowInput)
-      }
-    } else if ( obj instanceof Task ) {
+      return await this.addArray(obj)
+    } else {
+      console.log('error')
+    }
+  }
+
+  private async addArray (obj: (Function | Task)[]): Promise<boolean> {
+    const results = []
+    for (let i = 0; i < obj.length; i++) {
+      const individualFunction = obj[i]
+      results.push(await this.addFunctionOrTask(individualFunction))
+    }
+    return _.every(results)
+  }
+
+  private async addFunctionOrTask (obj: Function | Task): Promise<boolean> {
+    if ( obj instanceof Task ) {
       // if (obj.requiresWorkflowInput) {
-      const potentialFnToAdd = await obj.forWorkflow(this, workflowInput)
-      if (potentialFnToAdd) {
-        this.push(potentialFnToAdd)
-      }
+      // const potentialFnToAdd = obj.run.bind(obj) // await obj.forWorkflow(this)
+      // if (potentialFnToAdd) {
+      this.wrapAndPush(obj.run.bind(obj))
+      // }
     } else if ( isPromise(obj) || _.isFunction(obj) ) {
       if (!functionName(obj)) {
         Object.defineProperty(obj, 'name', { value: 'arrow-function' })
       }
-      this.push(obj)
+      this.wrapAndPush(obj)
     } else {
-      console.error('Trying to add an inappropritely typed service or task')
+      console.error(`Trying to add an inappropritely typed service or task ${obj.name}`)
     }
     return true
   }
 
-  public clear () {
-    this.wrappedFunctions = []
+  private wrapAndPush (fn: Function | Promise<any>) {
+    if (this.wrapperTask) {
+      const task = this.wrapperTask({ fn })
+      // Create new function
+      fn = task.run.bind(task)
+    }
+    this.wrappedTasks.push(fn)
   }
 
-  public async setup (workflowInput): Promise<void> {
-    if (!_.isEmpty(this.constructorFunctions)) {
-      await this.add(this.constructorFunctions, workflowInput)
+  public clear () {
+    this.wrappedTasks = []
+  }
+
+  public async setup (): Promise<void> {
+    if (!_.isEmpty(this.originalTasks)) {
+      await this.add(this.originalTasks)
+      this.originalTasks = []
     }
   }
 
-  public async fn (input): Promise<Function> {
-    return (async (input, wrappedFunctions) => {
-      console.log(`workflow received input ${input}`)
-      await this.setup(input)
-      let result: any = input
-      for ( let i = 0; i < wrappedFunctions.length; i++ ) {
-        const currentFn = wrappedFunctions[i]
-        result = await currentFn(result)
-      }
-      return result
-    })(input, this.wrappedFunctions)
+  public async run (input): Promise<Function> {
+    this.input = input
+
+    await this.setup()
+    
+    let result: any = input
+    for ( let i = 0; i < this.wrappedTasks.length; i++ ) {
+      const currentFn = this.wrappedTasks[i]
+      result = await currentFn(result)
+    }
+    return result
   }
 }

@@ -29,7 +29,7 @@ describe('workflow-task', () => {
           this.i = i
         }
   
-        async fn (i) {
+        async run (i) {
           this.i = this.i + i
           return this.i
         }

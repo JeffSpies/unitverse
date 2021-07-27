@@ -72,3 +72,49 @@ Perhaps Tasks can use di'd services:
     return input
   }
 }
+```
+
+Functions
+```ts
+input => output,
+config => input => output,
+```
+
+Class
+```ts
+config =>fn(input) => output
+```
+
+Workflows requires an array of functions. But if you were to do
+```ts
+const w = workflow([
+  a => a,
+  (c => d => c + d)(2)
+])
+
+w.fn(1)
+```
+
+Calling `w.fn` returns 3 because--walking through the array--[0] returns 1 and [1] became d => 2 + d where d = 1.
+
+The problem is that if you call w.fn(2), you expect to get 4--and you do. But what if the workflow list is as follows:
+
+```ts
+class Example extends Task {
+  x
+  constructor (x) {
+    this.x = x
+  }
+
+  fn (y) {
+    if (!this.x) {
+      this.x = y
+    }
+  }
+}
+
+const w = workflow([
+  new Task(3)
+])
+
+x

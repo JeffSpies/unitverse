@@ -29,7 +29,7 @@ describe('di', () => {
     fn(x) {
       return this.test1 + x
     }
-  }
+  }   
 
   beforeEach(() => {
     container = new Container()
@@ -109,7 +109,6 @@ describe('di', () => {
           return this.test1 + this.x + y + 4
         }
       }
-
       expect(container.registerClass('test1', Test1)).to.be.true
       expect(container.registerClass('test4', Test)).to.be.true
       const cls = container.resolve('test4')

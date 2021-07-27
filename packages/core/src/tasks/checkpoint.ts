@@ -5,80 +5,43 @@ import { AbstractCache } from '../base/services/cache'
 
 const defaultNameFunction = (name: string) => `${name}`
 
-export interface CheckpointOptions {
+export interface CheckpointConfig {
+  key: Task | Function | (Task | Function )[]
+  value: Task | Function | (Task | Function )[]
   cache: AbstractCache
-  name: string | Function
+  workflow: Workflow
 }
 
 export class Checkpoint extends Task{
-  cache: AbstractCache
+  cacheService: AbstractCache
+  workflowTask: any
 
-  checkpointName: string | Function
-  processedCheckpointName: string
-  
-  result: any = undefined
-  
-  events: {
-  }
+  keyTasks: (Task | Function)[]
+  valueTasks: (Task | Function)[]
 
-  constructor(opt: CheckpointOptions) {
+  constructor(config: CheckpointConfig) {
     super()
-    this.cache = opt.cache
-    this.checkpointName = opt.name
+
+    const { key, value, cache, workflow } = config
+
+    this.cacheService = cache
+    this.workflowTask = workflow
+
+    this.keyTasks = _.isArray(key) ? key : [key]
+    this.valueTasks = _.isArray(value) ? value : [value]
   }
 
-  async processCheckpointName(input?) {
-    if (this.processedCheckpointName) {
-    } else if (_.isString(this.checkpointName)) {
-      this.processedCheckpointName = <string>this.checkpointName
-    } else if (_.isFunction(this.checkpointName)) {
-      const checkpointFunction = <Function>this.checkpointName
-      this.processedCheckpointName = await checkpointFunction(input)
-    } else {
-      throw Error (`name was neither a string or a function`)
-    }
+  async run (input: any) {
+    const keyWorkflow = this.workflowTask(this.keyTasks)
+    const key = await keyWorkflow.run(input)
 
-    return this.processedCheckpointName
-  }
-
-  async isCached() {
-    // todo add isResultSet to allow for undefined as a result
-    if(this.result !== undefined)
-      return true
     try {
-      this.result = await this.cache.get(this.processedCheckpointName)
-      return true
+      return await this.cacheService.get(key)
     } catch (error) {
-      return false
+      const valueWorkflow = this.workflowTask(this.valueTasks)
+      const result = await valueWorkflow.run(input)
+      await this.cacheService.set(key, result)
+      return result
     }
-  }
-
-  cachedTask() {
-    return this.result
-  }
-
-  async uncachedTask(input) {
-    await this.cache.set(this.processedCheckpointName, input)
-    return input
-  }
-
-  async fn (input: any) {
-    if (!this.processedCheckpointName) {
-      this.processCheckpointName()
-    }
-    if(await this.isCached()) {
-      return this.cachedTask()
-    }
-    return this.uncachedTask(input)
-  }
-
-  requiresWorkflowInput: boolean = true
-
-  async forWorkflow(workflow: Workflow, workflowInput?): Promise<Function> {
-    this.processCheckpointName(workflowInput)
-    if (await this.isCached()) {
-      workflow.clear()
-    }
-    return super.forWorkflow(workflow, workflowInput)
   }
 }

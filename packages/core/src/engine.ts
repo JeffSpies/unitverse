@@ -22,7 +22,7 @@ export class Engine {
       await workflow.setup()
 
       // Make a copy of the function
-      this.builtFunction = workflow.fn.bind(workflow)
+      this.builtFunction = workflow.run.bind(workflow)
     }
     return this.builtFunction
   }

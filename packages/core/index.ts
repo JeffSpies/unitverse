@@ -18,11 +18,9 @@ class Queue extends Task {
   constructor({ cache }) {
     super()
     this.cache = cache
-    console.log('constructing cache', this.cache)
   }
 
   fn(input: any[]) {
-    console.log('calling cache', this.cache)
     return input
   }
 }
@@ -46,5 +44,4 @@ class Queue extends Task {
       (i) => i + 2
     ]
   })
-  console.log('Result', result)
 })()

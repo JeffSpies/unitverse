@@ -12,7 +12,7 @@ export class Inputter extends Task{
     this.value = value
   }
 
-  fn (input?: any) {
+  run (input?: any) {
     return this.value
   }
 }

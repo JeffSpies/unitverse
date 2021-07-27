@@ -1,31 +1,47 @@
 import { Task } from '../base/task'
 import { AbstractEmitter } from '../base/emitter'
 
+interface WrapperConfig {
+  fn
+  shouldLog?: boolean
+  emitter?: AbstractEmitter
+}
+
 export class Wrapper extends Task {
   func: any
   shouldLog: any
   emitter: AbstractEmitter
+  
+  logInput: boolean = false
+  logOutput: boolean = false
+  logTiming: boolean = false
 
-  constructor ({ fn, shouldLog, emitter }) {
+  constructor ({ fn, logInput, logOutput, logTiming, emitter }) {
     super()
     this.func = fn
-    this.shouldLog = shouldLog
     this.name = this.func.name
     this.emitter = emitter
-  }
 
-  public async fn (input) {
-    const time = process.hrtime()
-    if (this.shouldLog) {
-      console.log('task:input', this.name, 'input', input)
-    }
+    this.logInput = logInput
+    this.logOutput = logOutput
+    this.logTiming = logTiming
+  }
+ 
+  public async run (input) {
+    
+    let time
+    if (this.logTiming) time = process.hrtime()
+    if (this.logInput) console.log('task:input', this.name, 'input', `${input}`.substring(0, 10))
+
     const result = await this.func(input)
-    const diff = process.hrtime(time)
-    if (this.shouldLog) {
-      console.log(`${this.name} took ${(diff[0] * 1e9 + diff[1])} ns`)
+    
+    if (this.logTiming) {
+      const diff = process.hrtime(time)
       console.log(`${this.name} took ${(diff[0] * 1e9 + diff[1]) * 1e-6} ms`)
-      console.log('task:output', this.name, `${result}`)
     }
+
+    if (this.logOutput) console.log('task:output', this.name, `${JSON.stringify(result)}`.substring(0, 200))
+
     return result
   }
 }

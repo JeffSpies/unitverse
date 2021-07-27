@@ -32,13 +32,13 @@ export abstract class Task {
 
   requiresWorkflowInput: boolean = false
 
-  async forWorkflow(workflow?: Workflow, workflowInput?): Promise<Function> {
-    const bound = this.fn.bind(this)
-    Object.defineProperty(bound, "name", { value: this.name })
-    return bound
-  }
+  // async forWorkflow(workflow?: Workflow): Promise<Function> {
+  //   const bound = this.run.bind(this)
+  //   Object.defineProperty(bound, "name", { value: this.name })
+  //   return bound
+  // }
 
-  abstract fn(input?: any): any | Promise<any>
+  abstract run(input?: any): any | Promise<any>
 
   async close () {
     return true

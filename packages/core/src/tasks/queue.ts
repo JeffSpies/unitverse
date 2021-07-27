@@ -40,7 +40,7 @@ export class Queue extends Task{
     this.fnOrFns = fnOrFns
   }
 
-  async fn (input: any) {
+  async run (input: any) {
     if(!_.isArrayLikeObject(input)) {
       input = [input]
     }

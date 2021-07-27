@@ -13,7 +13,7 @@ export class Log extends Task{
     this.message = message
   }
 
-  fn (input: any) {
+  run (input: any) {
     let output
     if (_.isFunction(this.message)) {
       output = this.message(input)

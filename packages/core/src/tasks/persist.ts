@@ -5,7 +5,6 @@ export class Persist extends Task {
   y
   constructor(x) {
     super()
-    console.log('instantiated')
     this.y = x
   }
 
@@ -15,13 +14,12 @@ export class Persist extends Task {
     }
   }
 
-  async forWorkflow(workflow, input) {
-    this.set(input)
-    return super.forWorkflow(workflow, input)
-  }
+  // async forWorkflow(workflow) {
+  //   this.set(workflow.input)
+  //   return super.forWorkflow(workflow)
+  // }
 
-  async fn(i) {
-    console.log(`Class property is ${this.x}`)
+  async run(i) {
     return i
   }
 }

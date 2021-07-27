@@ -17,15 +17,17 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
   if (opts.inject) {
     proxy = new Proxy(cls, {
       construct: function(target: any, args: any) {
-        // If the constructor takes no arguments
+        // If the constructor takes no arguments, then it can't be expecting
+        // injected objects
         if (target.length === 0) {
           return new target()
         }
         
+        // If the last argument is not a plain object AND
         // If the number of arguments in the constructor is greater than those
         //  provided, fill in undefined until we get to the assumed injectable
         // options parameter at the end
-        if (target.length > ( args.length - 1)) {
+        if (target.length > args.length) {
           _.times(target.length - args.length - 1, () => {
             args.push(undefined)
           })
@@ -39,7 +41,6 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
         args[diObjectIndex] = new Proxy(args[diObjectIndex], {
           get: function (obj, prop) {
             const propString = <string>prop
-
             // First, check if the obj has that property
             if (Object.keys(obj).includes(propString)) {
               return obj[prop]
@@ -66,13 +67,13 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
   switch (opts.resolve) {
     case 'proxy': {
       // A proxied class will return the class
-      return () => proxy
+      return proxy
     }
     case 'instantiate': {
-      return () => new proxy()
+      return new proxy()
     }
     case 'wrap': {
-      return (...args: any[]) => () => new proxy(...args)
+      return (...args: any[]) => new proxy(...args)
     }
   }
 }
