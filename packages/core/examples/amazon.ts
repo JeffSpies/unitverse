@@ -12,6 +12,7 @@ import { ParseUrl } from '../src/tasks/parse-url'
 import { Get } from '../src/tasks/get'
 import { Log } from '../src/tasks/log'
 import { WriteFile } from '../src/units/files'
+import { nameWorkflow } from '../src/tasks/workflow'
 
 import objectHash from 'object-hash'
 
@@ -24,32 +25,33 @@ import { Identity } from '../src/tasks/identity'
 (async () => {
   const getPage = ({ checkpoint, identity, get, mapValues, log, parseUrl, doWhile, writeFile }) => [
     identity('https://www.amazon.com/s?i=lawngarden&bbn=3610851&rh=n%3A2972638011%2Cn%3A3610851%2Cn%3A128061011%2Cp_85%3A2470955011%2Cp_n_condition-type%3A6358198011&s=price-asc-rank&dc'),
-    doWhile ([
-      checkpoint({
-        key: [ parseUrl(), (i) => objectHash(i, { algo: 'sha1' }) ],
-        value: [
-          mapValues({
-            url: [ identity() ],
-            html: [ http.get() ]
-          })
-        ]
-      }),
-      writeFile({
-        path: [ identity('./dist/html') ],
-        filename: [ get('url'), parseUrl(), (i) => `${objectHash(i, { algo: 'sha1'})}.html` ],
-        content: [ get('html') ]
-      }),
-      cheerio.select(
-        'li.a-last > a',
-        (item, $, $html, _) => {
-          return `https://www.amazon.com${$(item).attr('href')}`
-        }
-      ),
-      get('[0]'),
-      log()
-    ], [
-      input => input ? true : false
-    ])
+    log(),
+    // doWhile ([
+    //   checkpoint({
+    //     key: [ parseUrl(), (i) => objectHash(i, { algo: 'sha1' }) ],
+    //     value: [
+    //       mapValues({
+    //         url: [ identity() ],
+    //         html: [ http.get() ]
+    //       })
+    //     ]
+    //   }),
+    //   writeFile({
+    //     path: [ identity('./dist/html') ],
+    //     filename: [ get('url'), parseUrl(), (i) => `${objectHash(i, { algo: 'sha1'})}.html` ],
+    //     content: [ get('html') ]
+    //   }),
+    //   cheerio.select(
+    //     'li.a-last > a',
+    //     (item, $, $html, _) => {
+    //       return `https://www.amazon.com${$(item).attr('href')}`
+    //     }
+    //   ),
+    //   get('[0]'),
+    //   log()
+    // ], [
+    //   input => input ? true : false
+    // ])
     // async (i) => { await new Promise(resolve => setTimeout(resolve, 5000)); return i } 
   ]
   
@@ -65,7 +67,7 @@ import { Identity } from '../src/tasks/identity'
     persist: Persist,
     log: Log,
     writeFile: WriteFile,
-    wrapper: [ Wrapper, { logOutput: true } ]
+    wrapper: [ Wrapper, { logInput: true, logOutput: true } ]
   }).into(getPage)
 
   // console.log('Result', result)

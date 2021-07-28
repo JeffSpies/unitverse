@@ -19,10 +19,11 @@ export class Engine {
   public async build ( functions: any): Promise<Function> {
     if (this.builtFunction === undefined) {
       const workflow = await this.wrappedWorkflow(functions)
-      await workflow.setup()
+      // await workflow.setup()
 
       // Make a copy of the function
       this.builtFunction = workflow.run.bind(workflow)
+      Object.defineProperty(this.builtFunction, 'name', { value: 'engine-workflow' })
     }
     return this.builtFunction
   }

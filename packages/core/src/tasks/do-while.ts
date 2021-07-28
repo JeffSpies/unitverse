@@ -5,6 +5,8 @@ export interface DoWhileOptions {
 }
 
 export class DoWhile extends Task{
+  name = 'dowhile'
+
   workflowWrapper
   undertakeFn
   whilstFn

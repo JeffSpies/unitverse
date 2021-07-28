@@ -7,11 +7,21 @@ import metadata from '../util/metadata'
 import { Task } from '../base/task'
 import functionName from '../util/function-name'
 
-interface Options {
-  wrapper?: any
+export function nameWorkflow (value) {
+  function workflowName () {
+    return value
+  }
+  metadata.set(workflowName, 'unitverse:workflow:name', true)
+  return workflowName
 }
 
+export interface WorkflowConfig {
+  wrapper?: any
+  name?: string
+}
 export class Workflow extends Task {
+  taskName = 'workflow'
+
   originalTasks: (Task | Function)[]
 
   wrappedTasks: any
@@ -19,7 +29,7 @@ export class Workflow extends Task {
 
   input: any
 
-  constructor (tasks = [], options: Options = {}) {
+  constructor (tasks = [], options: WorkflowConfig = {}) {
     super()
     
     this.originalTasks = tasks
@@ -28,24 +38,18 @@ export class Workflow extends Task {
     this.wrapperTask = options.wrapper
   }
 
-  private async add (obj: Function | Task | (Function | Task)[]): Promise<boolean> {
-    // if (_.isFunction(obj)) {
-    //   const result = await obj()
-    //   if (_.isArray(result)) {
-    //     return await this.addArray(result)
-    //   } else {
-    //     // todo maybe we shoudln't allow this, I don't know
-    //     return await this.addFunctionOrTask(obj)
-    //   }
-    // }
+  private async add (obj: Function | Task | Promise <any> | (Function | Promise <any> | Task)[]): Promise<boolean> {
     if (_.isArray(obj)) {
-      return await this.addArray(obj)
+    } else if (obj instanceof Task || isPromise(obj) || _.isFunction(obj)) {
+      obj = [ <Function | Task | Promise<any>> obj ]
     } else {
-      console.log('error')
+      obj = [ () => obj ]
     }
+
+    return await this.addArray(obj)
   }
 
-  private async addArray (obj: (Function | Task)[]): Promise<boolean> {
+  private async addArray (obj: (Function | Promise <any> | Task)[]): Promise<boolean> {
     const results = []
     for (let i = 0; i < obj.length; i++) {
       const individualFunction = obj[i]
@@ -54,7 +58,7 @@ export class Workflow extends Task {
     return _.every(results)
   }
 
-  private async addFunctionOrTask (obj: Function | Task): Promise<boolean> {
+  private async addFunctionOrTask (obj: Function | Task | Promise<any>): Promise<boolean> {
     if ( obj instanceof Task ) {
       // if (obj.requiresWorkflowInput) {
       // const potentialFnToAdd = obj.run.bind(obj) // await obj.forWorkflow(this)
@@ -62,6 +66,11 @@ export class Workflow extends Task {
       this.wrapAndPush(obj.run.bind(obj))
       // }
     } else if ( isPromise(obj) || _.isFunction(obj) ) {
+      if (metadata.get(obj, 'unitverse:workflow:name')) {
+        this.name = (<Function>obj)()
+        return true
+      }
+
       if (!functionName(obj)) {
         Object.defineProperty(obj, 'name', { value: 'arrow-function' })
       }
@@ -77,6 +86,7 @@ export class Workflow extends Task {
       const task = this.wrapperTask({ fn })
       // Create new function
       fn = task.run.bind(task)
+      Object.defineProperty(fn, 'name', { value: task.name })
     }
     this.wrappedTasks.push(fn)
   }

@@ -3,8 +3,10 @@ import { AbstractEmitter } from '../base/emitter'
 
 interface WrapperConfig {
   fn
-  shouldLog?: boolean
   emitter?: AbstractEmitter
+  logInput?: boolean
+  logOutput?: boolean
+  logTiming?: boolean
 }
 
 export class Wrapper extends Task {

@@ -6,6 +6,8 @@ interface LogConfig {
 }
 
 export class Log extends Task{
+  log = 'log'
+
   message: string | Function
 
   constructor(message?: string | Function, config?:LogConfig) {

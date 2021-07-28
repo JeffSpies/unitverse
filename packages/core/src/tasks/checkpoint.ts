@@ -13,6 +13,8 @@ export interface CheckpointConfig {
 }
 
 export class Checkpoint extends Task{
+  name = 'checkpoint'
+  
   cacheService: AbstractCache
   workflowTask: any
 
