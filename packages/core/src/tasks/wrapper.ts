@@ -1,10 +1,7 @@
 import { Task } from '../base/task'
-import { AbstractEmitter } from '../base/emitter'
-
 import _ from 'lodash'
 
 interface WrapperConfig {
-  emitter?: AbstractEmitter
   logInput?: boolean
   logOutput?: boolean
   logTiming?: boolean
@@ -36,16 +33,16 @@ export class Wrapper extends Task {
 
     let time
     if (this.config.logTiming) time = process.hrtime()
-    if (this.config.logInput) console.log(`${_.times(this.unitverse.level, (n) => '\t')}${parentName}\t${taskName}`, 'input', `${input}`.substring(0, 10))
+    if (this.config.logInput) console.log(`${_.times(this.unitverse.level, (n) => '\t').join('')}${parentName}\t${taskName}`, 'input', `${input}`.substring(0, 10))
 
     const result = await this.task.run(input)
     
     if (this.config.logTiming) {
       const diff = process.hrtime(time)
-      console.log(`${taskName} took ${(diff[0] * 1e9 + diff[1]) * 1e-6} ms`)
+      console.log(`${_.times(this.unitverse.level, (n) => '\t').join('')}${parentName}\t${taskName}\t${(diff[0] * 1e9 + diff[1]) * 1e-6} ms`)
     }
 
-    if (this.config.logOutput) console.log(`${parentName}\t${taskName}`, `${JSON.stringify(result)}`.substring(0, 200))
+    if (this.config.logOutput) console.log(`${_.times(this.unitverse.level, (n) => '\t').join('')}${parentName}\t${taskName}`, `${JSON.stringify(result)}`.substring(0, 200))
 
     return result
   }

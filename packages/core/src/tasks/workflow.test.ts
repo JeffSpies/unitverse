@@ -55,7 +55,7 @@ describe('workflows, wrappers, tasks', () => {
       {
         wrapper: (c, o) => new Wrapper(c, o),
         wrapperConfig: {
-          logInput: true
+          logTiming: true
         }
       }
     )

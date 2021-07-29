@@ -1,4 +1,4 @@
-import { Workflow } from "../tasks/workflow"
+import { Workflow, WorkflowConfig } from "../tasks/workflow"
 
 import functionName from '../util/function-name'
 import _ from 'lodash'
@@ -19,6 +19,20 @@ export abstract class Task {
     this.unitverse = {}
     this.unitverse.args = args
     this.unitverse.name = args.name || functionName(this.constructor)
+  }
+
+  public workflowify (obj: Task | Task[] | Workflow, config) {
+    let taskList
+    if (obj instanceof Workflow) {
+      // todo Change the wrapper if config differs than what is provided
+      return obj
+    } else if (obj instanceof Task) {
+      taskList = [taskList]
+    } else if (_.isArray(obj)) {
+      taskList = obj
+    }
+    // todo build workflowConfig if direct parameters are not provided
+    return new config.Workflow(taskList, config.workflowConfig)
   }
 
   public setParentWorkflow(workflow: Workflow) {

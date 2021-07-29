@@ -1,35 +1,29 @@
 import { Task } from '../base/task'
+import { Workflow } from './workflow'
 
-export interface DoWhileOptions {
-  workflow?: any
+export interface DoWhileConfig {
+  Workflow?: any
+  Wrapper?: any
+  wrapperConfig?: any
 }
 
-export class DoWhile extends Task{
+export class DoWhile extends Task {
   name = 'dowhile'
 
-  workflowWrapper
-  undertakeFn
-  whilstFn
+  doWorkflow
+  whileWorkflow
 
-  constructor(undertake, whilst, options: DoWhileOptions = {}) {
-    super()
-
-    this.workflowWrapper = options.workflow
-
-    this.undertakeFn = undertake
-    this.whilstFn = whilst
+  constructor(tasks: Task | Task[] | Workflow, whilst: Task | Task[] | Workflow, config: DoWhileConfig = {}) {
+    super(tasks, whilst, config)
+    this.doWorkflow = this.workflowify(tasks, config)
+    this.whileWorkflow = this.workflowify(whilst, config)
   }
 
   async run (input: any) {
     let result = input
-    let whilstWorkflowTask 
     do {
-      const undertakeTasks = this.undertakeFn
-      const undertakeWorkflowTask = this.workflowWrapper(undertakeTasks)
-      result = await undertakeWorkflowTask.run(result)
-      const whilstTasks = this.whilstFn
-      whilstWorkflowTask = this.workflowWrapper(whilstTasks)
-    } while(await whilstWorkflowTask.run(result))
+      result = await this.doWorkflow.run(result)
+    } while(await this.whileWorkflow.run(result))
     return result
   }
 }
