@@ -1,42 +1,30 @@
 import { Workflow } from "../tasks/workflow"
 
 import functionName from '../util/function-name'
+import _ from 'lodash'
 
-export interface TaskOptions {
+interface TaskMetadata {
+  args?: any
   name?: string
-}
-
-export const TaskDefaults = {
-  name: undefined
+  parentWorkflow?: Workflow
+  level?: number
 }
 
 export abstract class Task {
-  name: string
-  engine: any // todo do we need this
+  unitverse: TaskMetadata
   
   static inject: boolean = false
 
-  constructor(opts?: TaskOptions) {
-    opts = {
-      ...TaskDefaults,
-      ...opts
-    }
-    this.name = opts.name || functionName(this.constructor)
+  constructor(...args: any) {
+    this.unitverse = {}
+    this.unitverse.args = args
+    this.unitverse.name = args.name || functionName(this.constructor)
   }
 
-  emit(topic, message) {
-    // const topicArray = [this.constructor.name, this.name].concat(topic)
-    // const topicString = topicArray.join(':')
-    // this.engine.emitter.emit(topicString, message)
+  public setParentWorkflow(workflow: Workflow) {
+    this.unitverse.parentWorkflow = workflow
+    this.unitverse.level = _.get(this.unitverse, 'parentWorkflow.level', 1) + 1
   }
-
-  requiresWorkflowInput: boolean = false
-
-  // async forWorkflow(workflow?: Workflow): Promise<Function> {
-  //   const bound = this.run.bind(this)
-  //   Object.defineProperty(bound, "name", { value: this.name })
-  //   return bound
-  // }
 
   abstract run(input?: any): any | Promise<any>
 

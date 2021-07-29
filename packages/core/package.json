@@ -46,7 +46,9 @@
   },
   "scripts": {
     "start": "ts-node examples/amazon.ts",
+    "spec": "ts-node examples/spec.ts",
     "di": "ts-node diindex.ts",
-    "test": "mocha ./**/*.test.ts --reporter spec --require ts-node/register --exit"
+    "test": "mocha ./**/*.test.ts --reporter spec --require ts-node/register --exit",
+    "test1": "mocha --reporter spec --require ts-node/register --exit"
   }
 }

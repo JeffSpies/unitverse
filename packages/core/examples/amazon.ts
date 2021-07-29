@@ -24,8 +24,8 @@ import { Identity } from '../src/tasks/identity'
 
 (async () => {
   const getPage = ({ checkpoint, identity, get, mapValues, log, parseUrl, doWhile, writeFile }) => [
-    identity('https://www.amazon.com/s?i=lawngarden&bbn=3610851&rh=n%3A2972638011%2Cn%3A3610851%2Cn%3A128061011%2Cp_85%3A2470955011%2Cp_n_condition-type%3A6358198011&s=price-asc-rank&dc'),
-    log(),
+    // identity('https://www.amazon.com/s?i=lawngarden&bbn=3610851&rh=n%3A2972638011%2Cn%3A3610851%2Cn%3A128061011%2Cp_85%3A2470955011%2Cp_n_condition-type%3A6358198011&s=price-asc-rank&dc'),
+    // log()
     // doWhile ([
     //   checkpoint({
     //     key: [ parseUrl(), (i) => objectHash(i, { algo: 'sha1' }) ],

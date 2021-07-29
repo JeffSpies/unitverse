@@ -28,7 +28,7 @@ class Queue extends Task {
 (async () => {
   const result = await Engine.inject({
     // Services
-    cache: [ Cache, { path: './dist/' } ],
+    cache: [ Cache, { path: './dist/' } ], 
     // dashboard: Dashboard,
     emitter: Emitter,
     // Tasks

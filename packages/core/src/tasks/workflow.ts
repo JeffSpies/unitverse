@@ -7,110 +7,62 @@ import metadata from '../util/metadata'
 import { Task } from '../base/task'
 import functionName from '../util/function-name'
 
-export function nameWorkflow (value) {
-  function workflowName () {
-    return value
-  }
-  metadata.set(workflowName, 'unitverse:workflow:name', true)
-  return workflowName
-}
-
 export interface WorkflowConfig {
   wrapper?: any
+  wrapperConfig?: any
   name?: string
 }
 export class Workflow extends Task {
-  taskName = 'workflow'
+  tasks: any = []
 
-  originalTasks: (Task | Function)[]
+  wrapper: any
+  wrapperConfig: any
 
-  wrappedTasks: any
-  wrapperTask: any
+  options
 
-  input: any
-
-  constructor (tasks = [], options: WorkflowConfig = {}) {
-    super()
-    
-    this.originalTasks = tasks
-    this.wrappedTasks = []
-
-    this.wrapperTask = options.wrapper
-  }
-
-  private async add (obj: Function | Task | Promise <any> | (Function | Promise <any> | Task)[]): Promise<boolean> {
-    if (_.isArray(obj)) {
-    } else if (obj instanceof Task || isPromise(obj) || _.isFunction(obj)) {
-      obj = [ <Function | Task | Promise<any>> obj ]
-    } else {
-      obj = [ () => obj ]
+  constructor (tasks: any = [], options: WorkflowConfig = {}){
+    super(tasks, options)
+    this.wrapper = options.wrapper
+    this.wrapperConfig = options.wrapperConfig
+    this.add(tasks)
+    if (this.wrapper) {
+      return this.wrapper(this, this.wrapperConfig)
     }
-
-    return await this.addArray(obj)
   }
 
-  private async addArray (obj: (Function | Promise <any> | Task)[]): Promise<boolean> {
+  private add ( tasks: Task | Task[]): boolean {
+    if (!_.isArray(tasks)) {
+      tasks = [ tasks ]
+    }
+    return this.addArray(tasks)
+  }
+
+  private addArray (tasks: Task[]): boolean {
     const results = []
-    for (let i = 0; i < obj.length; i++) {
-      const individualFunction = obj[i]
-      results.push(await this.addFunctionOrTask(individualFunction))
+    for (let i = 0; i < tasks.length; i++) {
+      const individualFunction = tasks[i]
+      results.push(this.addTask(individualFunction))
     }
     return _.every(results)
   }
 
-  private async addFunctionOrTask (obj: Function | Task | Promise<any>): Promise<boolean> {
-    if ( obj instanceof Task ) {
-      // if (obj.requiresWorkflowInput) {
-      // const potentialFnToAdd = obj.run.bind(obj) // await obj.forWorkflow(this)
-      // if (potentialFnToAdd) {
-      this.wrapAndPush(obj.run.bind(obj))
-      // }
-    } else if ( isPromise(obj) || _.isFunction(obj) ) {
-      if (metadata.get(obj, 'unitverse:workflow:name')) {
-        this.name = (<Function>obj)()
-        return true
-      }
-
-      if (!functionName(obj)) {
-        Object.defineProperty(obj, 'name', { value: 'arrow-function' })
-      }
-      this.wrapAndPush(obj)
-    } else {
-      console.error(`Trying to add an inappropritely typed service or task ${obj.name}`)
-    }
+  private addTask (task: Task): boolean {
+    task.setParentWorkflow(this)
+    this.wrapAndPushTask(task)
     return true
   }
 
-  private wrapAndPush (fn: Function | Promise<any>) {
-    if (this.wrapperTask) {
-      const task = this.wrapperTask({ fn })
-      // Create new function
-      fn = task.run.bind(task)
-      Object.defineProperty(fn, 'name', { value: task.name })
+  private wrapAndPushTask (task: Task) {
+    if (this.wrapper) {
+      task = this.wrapper(task, this.wrapperConfig)
     }
-    this.wrappedTasks.push(fn)
+    this.tasks.push(task)
   }
 
-  public clear () {
-    this.wrappedTasks = []
-  }
-
-  public async setup (): Promise<void> {
-    if (!_.isEmpty(this.originalTasks)) {
-      await this.add(this.originalTasks)
-      this.originalTasks = []
-    }
-  }
-
-  public async run (input): Promise<Function> {
-    this.input = input
-
-    await this.setup()
-    
+  public async run (input: any): Promise<Function> {
     let result: any = input
-    for ( let i = 0; i < this.wrappedTasks.length; i++ ) {
-      const currentFn = this.wrappedTasks[i]
-      result = await currentFn(result)
+    for ( let i = 0; i < this.tasks.length; i++ ) {
+      result = await this.tasks[i].run(result)
     }
     return result
   }

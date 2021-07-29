@@ -1,49 +1,64 @@
 import { Workflow } from './workflow'
-import chai from 'chai'
 import { expect } from 'chai'
 import { Task } from '../base/task'
+import { Wrapper } from './wrapper'
 
-describe('workflow-task', () => {
+class Add extends Task {
+  value: number
 
-  beforeEach(() => {
+  constructor (value) {
+    super(value)
+    this.value = value
+  }
 
-  })
+  run (input) {
+    return this.value + input
+  }
+}
 
-  describe('memory', () => {
-    it ('should exist', async () => {
+describe('basic tests', () => {
+  describe('metadata', () => {
+    it ('workflow attached', async () => {
+      const add1 = new Add(5)
+      const add2 = new Add(10)
       const workflow = new Workflow([
-        (i) => i + 1
+        add1,
+        add2
       ])
-      const fn = workflow.fn.bind(workflow)
-      
-      expect(await fn(1)).to.equal(2)
-      expect(await fn(2)).to.equal(3)
-      expect(await fn(50)).to.equal(51)
+      expect(await workflow.run(5)).to.equal(20)
+      expect(add1.unitverse.parentWorkflow).to.equal(workflow)
+      expect(add2.unitverse.parentWorkflow).to.equal(workflow)
     })
+  })
+})
 
-    it ('should exist for Tasks', async () => {
-      class Counter extends Task {
-        i
-        constructor(i) {
-          super()
-          this.i = i
-        }
-  
-        async run (i) {
-          this.i = this.i + i
-          return this.i
+describe('workflows, wrappers, tasks', () => {
+  it ('wrappers', async () => {
+    const add1 = new Add(3)
+    const add2 = new Add(5)
+    const basic = new Workflow([
+      add1,
+      add2
+    ])
+    expect(await basic.run(1)).to.equal(9)
+
+    const wrapped = new Workflow(
+      [ add1, add2 ],
+      {
+        wrapper: (c, o) => new Wrapper(c, o)
+      }
+    )
+    expect(await wrapped.run(1)).to.equal(9)
+
+    const wrappedWithConfig = new Workflow(
+      [ add1, add2 ],
+      {
+        wrapper: (c, o) => new Wrapper(c, o),
+        wrapperConfig: {
+          logInput: true
         }
       }
-  
-      const counter = (i) => new Counter(i)
-  
-      const workflow = new Workflow([
-        counter(1)
-      ])
-      const fn = workflow.fn.bind(workflow)
-      expect(await fn(1)).to.equal(2)
-      expect(await fn(10)).to.equal(12)
-      expect(await fn(20)).to.equal(32)
-    })
-  })  
+    )
+    expect(await wrappedWithConfig.run(1)).to.equal(9)
+  })
 })

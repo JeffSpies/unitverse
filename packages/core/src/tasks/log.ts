@@ -6,7 +6,7 @@ interface LogConfig {
 }
 
 export class Log extends Task{
-  log = 'log'
+  name = 'log'
 
   message: string | Function
 

@@ -1,48 +1,51 @@
 import { Task } from '../base/task'
 import { AbstractEmitter } from '../base/emitter'
 
+import _ from 'lodash'
+
 interface WrapperConfig {
-  fn
   emitter?: AbstractEmitter
   logInput?: boolean
   logOutput?: boolean
   logTiming?: boolean
 }
 
+const WrapperDefaults = {
+  logInput: false,
+  logOutput: false,
+  logTiming: false
+}
+
 export class Wrapper extends Task {
-  func: any
-  shouldLog: any
-  emitter: AbstractEmitter
-  
-  logInput: boolean = false
-  logOutput: boolean = false
-  logTiming: boolean = false
+  task: any
+  config: WrapperConfig
 
-  constructor ({ fn, logInput, logOutput, logTiming, emitter }) {
-    super()
-    this.func = fn
-    this.name = this.func.name
-    this.emitter = emitter
-
-    this.logInput = logInput
-    this.logOutput = logOutput
-    this.logTiming = logTiming
+  constructor (task: Task, config?: WrapperConfig) {
+    super(task, config)
+    this.unitverse = task.unitverse
+    this.task = task
+    this.config = {
+      ...WrapperDefaults,
+      ...config
+    }
   }
  
-  public async run (input) {
-    
-    let time
-    if (this.logTiming) time = process.hrtime()
-    if (this.logInput) console.log('task:input', this.name, 'input', `${input}`.substring(0, 10))
+  public async run (input: any) {
+    const parentName = _.get(this.unitverse, 'parentWorkflow.unitverse.name')
+    const taskName = this.unitverse.name
 
-    const result = await this.func(input)
+    let time
+    if (this.config.logTiming) time = process.hrtime()
+    if (this.config.logInput) console.log(`${_.times(this.unitverse.level, (n) => '\t')}${parentName}\t${taskName}`, 'input', `${input}`.substring(0, 10))
+
+    const result = await this.task.run(input)
     
-    if (this.logTiming) {
+    if (this.config.logTiming) {
       const diff = process.hrtime(time)
-      console.log(`${this.name} took ${(diff[0] * 1e9 + diff[1]) * 1e-6} ms`)
+      console.log(`${taskName} took ${(diff[0] * 1e9 + diff[1]) * 1e-6} ms`)
     }
 
-    if (this.logOutput) console.log('task:output', this.name, `${JSON.stringify(result)}`.substring(0, 200))
+    if (this.config.logOutput) console.log(`${parentName}\t${taskName}`, `${JSON.stringify(result)}`.substring(0, 200))
 
     return result
   }

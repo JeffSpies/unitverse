@@ -1,6 +1,22 @@
 # Unitverse
 
-## Architecture
+## Architecture 0.2
+
+Engines register things.
+
+Workflows build streams of Tasks. 
+
+workflow([
+  add(1),
+  subtract(2),
+  multiply(3),
+  doWhile(
+    workflow([ add(2) ]),
+    workflow([ i => i > 30 ])
+  )
+])
+
+## Architecture 0.1
 
 Engine
   <- DIEngine
