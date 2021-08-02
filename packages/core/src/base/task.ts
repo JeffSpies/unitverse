@@ -1,4 +1,4 @@
-import { Workflow, WorkflowConfig } from "../tasks/workflow"
+// import { Workflow, WorkflowConfig } from "../tasks/workflow"
 
 import functionName from '../util/function-name'
 import _ from 'lodash'
@@ -6,7 +6,7 @@ import _ from 'lodash'
 interface TaskMetadata {
   args?: any
   name?: string
-  parentWorkflow?: Workflow
+  parentWorkflow?
   level?: number
 }
 
@@ -18,13 +18,17 @@ export abstract class Task {
   constructor(...args: any) {
     this.unitverse = {}
     this.unitverse.args = args
-    this.unitverse.name = args.name || functionName(this.constructor)
+    this.unitverse.name = 
+      _.get(args, `[${args.length-1}].name`) || 
+      functionName(this.constructor)
   }
 
-  public workflowify (obj: Task | Task[] | Workflow, config) {
+  public workflowify (obj: Task | Task[] | any, config) {
+    const workflowCls = this.unitverse.parentWorkflow['prototype']
+
     let taskList
-    if (obj instanceof Workflow) {
-      // todo Change the wrapper if config differs than what is provided
+    if (obj instanceof workflowCls) {
+      // todo Change the wrapper if config differs than what is provided?
       return obj
     } else if (obj instanceof Task) {
       taskList = [taskList]
@@ -35,7 +39,7 @@ export abstract class Task {
     return new config.Workflow(taskList, config.workflowConfig)
   }
 
-  public setParentWorkflow(workflow: Workflow) {
+  public setParentWorkflow(workflow) {
     this.unitverse.parentWorkflow = workflow
     this.unitverse.level = _.get(this.unitverse, 'parentWorkflow.level', 1) + 1
   }

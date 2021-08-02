@@ -8,25 +8,27 @@ import { Task } from '../base/task'
 import functionName from '../util/function-name'
 
 export interface WorkflowConfig {
-  wrapper?: any
-  wrapperConfig?: any
+  Wrapper?: any
+  WrapperConfig?: any
   name?: string
 }
 export class Workflow extends Task {
   tasks: any = []
 
-  wrapper: any
-  wrapperConfig: any
+  Wrapper: any
+  WrapperConfig: any
 
   options
 
   constructor (tasks: any = [], options: WorkflowConfig = {}){
     super(tasks, options)
-    this.wrapper = options.wrapper
-    this.wrapperConfig = options.wrapperConfig
+    const { Wrapper, WrapperConfig, name } = options
+    
+    this.Wrapper = Wrapper
+    this.WrapperConfig = WrapperConfig || {}
     this.add(tasks)
-    if (this.wrapper) {
-      return this.wrapper(this, this.wrapperConfig)
+    if (this.Wrapper) {
+      return new this.Wrapper(this, this.WrapperConfig)
     }
   }
 
@@ -37,11 +39,15 @@ export class Workflow extends Task {
     return this.addArray(tasks)
   }
 
-  private addArray (tasks: Task[]): boolean {
+  private addArray (tasks: (Function | Task)[]): boolean {
     const results = []
     for (let i = 0; i < tasks.length; i++) {
-      const individualFunction = tasks[i]
-      results.push(this.addTask(individualFunction))
+      const task = tasks[i]
+      if (task instanceof Task) {
+        results.push(this.addTask(task))
+      } else {
+        results.push(this.addFunction(task))
+      }
     }
     return _.every(results)
   }
@@ -52,9 +58,13 @@ export class Workflow extends Task {
     return true
   }
 
+  private addFunction(task: Function): boolean {
+    return true
+  }
+
   private wrapAndPushTask (task: Task) {
-    if (this.wrapper) {
-      task = this.wrapper(task, this.wrapperConfig)
+    if (this.Wrapper) {
+      task = new this.Wrapper(task, this.WrapperConfig)
     }
     this.tasks.push(task)
   }

@@ -1,66 +1,84 @@
-
 import _ from 'lodash'
-import pMap from 'p-map'
+import isPromise from 'p-is-promise'
+
+// import { Engine as EngineBase } from './engine'
+import { Container } from './util/di/'
+import { Service } from './base/service'
 import { Task } from './base/task'
 import { Workflow } from './tasks/workflow'
-import { asFunction } from 'awilix'
+import { Wrapper } from './tasks/wrapper'
 
 export class Engine {
-  builtFunction: any = undefined
   scope: any
-  taskObjects: Task[] = []
+  workflow: any
 
-  wrappedWorkflow: any
-
-  constructor({ workflow }) {
-    this.wrappedWorkflow = workflow
+  constructor() {
+    this.scope = new Container()
   }
 
-  public async build ( functions: any): Promise<Function> {
-    if (this.builtFunction === undefined) {
-      const workflow = await this.wrappedWorkflow(functions)
-      // await workflow.setup()
+  registerValue(name: string, obj: any) {
+    this.scope.registerValue(name, obj, {
+      resolve: 'identity',
+      inject: false,
+      isLazy: false
+    })
+  }
 
-      // Make a copy of the function
-      this.builtFunction = workflow.run.bind(workflow)
-      Object.defineProperty(this.builtFunction, 'name', { value: 'engine-workflow' })
+  registerTask(name: string, cls: any, defaults?) {
+    this.scope.registerClass(_.upperFirst(name), cls, defaults, {
+      resolve: 'identity',
+      inject: true,
+      isLazy: false,
+    })
+    this.scope.registerClass(_.lowerFirst(name), cls, defaults, {
+      resolve: 'instance',
+      inject: true,
+      isLazy: true,
+    })
+  }
+
+  registerService(name: string, cls: any, defaults?) {
+    this.scope.registerClass(_.upperFirst(name), cls, defaults, {
+      resolve: 'identity',
+      inject: true,
+      isLazy: true,
+    })
+  }
+
+  register(dependencies: Object) {
+    let obj: any,
+        args: any
+    
+    for(const [name, value] of Object.entries(dependencies)) {
+      obj = value
+      args = {}
+      if (_.isArray(obj)) {
+        [obj, args] = obj
+      }
+
+      if ( obj.prototype instanceof Service ) {
+        this.registerService(name, obj, args)
+      } else if (obj.prototype instanceof Task) {
+        this.registerTask(name, obj, args)
+      } else {
+        this.registerValue(name, obj)
+      }
     }
-    return this.builtFunction
-  }
 
-  /**
-   * 
-   * @param fns 
-   * @param input 
-   */
-  public async run( script:any, input?: any ): Promise<any> {
-    if (this.builtFunction === undefined) {
-      this.builtFunction = await this.build(script)
+    if (!this.scope.contains('Workflow')) {
+      this.registerTask('workflow', Workflow)
     }
-    return this.builtFunction(input)
   }
 
-  /**
-   * 
-   * @param result The result you want to exit with
-   */
-  public exit ( result: any ) {
+  inject(fn: Function) {
+    const injectedFunction = this.scope.asFunction(fn)
+    const tasks = injectedFunction()
+    const WorkflowClass = this.scope.resolve('Workflow')
+
+    this.workflow = new WorkflowClass(tasks, { name: 'EngineWorkflow' })
   }
 
-  /**
-   * Closes all tasks registered in the engine
-   */
-  public async close(): Promise<Boolean> {
-    if (
-      _.every(await pMap(
-        this.taskObjects, 
-        (task:Task) => task.close()
-      ), i => i === true)
-    ) {
-      // this.emitter.emit('engine:close', true)
-      return true
-    }
-    // this.emitter.emit('engine:close', false)
-    return false
+  run(input) {
+    return this.workflow.run(input)
   }
 }

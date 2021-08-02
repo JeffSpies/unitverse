@@ -1,4 +1,4 @@
-import { AbstractEmitter } from '../../base/emitter'
+import { AbstractEmitter } from '../../base/services/emitter'
 import { EventEmitter2 } from 'eventemitter2'
 
 export class Emitter extends AbstractEmitter {

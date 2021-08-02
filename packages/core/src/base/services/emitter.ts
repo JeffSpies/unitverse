@@ -1,4 +1,4 @@
-import { Service } from "./service";
+import { Service } from "../service";
 
 export abstract class AbstractEmitter extends Service {
   abstract on(topic: string | string[], fn: Function): void

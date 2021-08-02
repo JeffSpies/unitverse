@@ -8,7 +8,7 @@ interface RegistrationOptions {
 
 export interface ClassOptions extends RegistrationOptions {
   constructorDefaults?: any
-  resolve?: 'instantiate' | 'wrap' | 'proxy'
+  resolve?: 'instance' | 'identity'
   defaults?: any
 }
 
@@ -17,9 +17,12 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
   if (opts.inject) {
     proxy = new Proxy(cls, {
       construct: function(target: any, args: any) {
+
         // If the constructor takes no arguments, then it can't be expecting
-        // injected objects
-        if (target.length === 0) {
+        // injected objects. However, there are occasions where the
+        // constructor is a, e.g., a makeTask wrapper, and args are passed in, but
+        // the target seems to take no args. That's why we check both.
+        if (_.isEmpty(args) && target.length === 0) {
           return new target()
         }
         
@@ -27,11 +30,19 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
         // If the number of arguments in the constructor is greater than those
         //  provided, fill in undefined until we get to the assumed injectable
         // options parameter at the end
-        if (target.length > args.length) {
+        if ( target.length > args.length) {
           _.times(target.length - args.length - 1, () => {
             args.push(undefined)
           })
           args.push({})
+        } else {
+          // The last argument will always be {} if the above if-conditional
+          // was true, so just do this as an else - mostly for the weird-wrapper
+          // scenario when the target is not relfective of the underlying function
+          // being called
+          if (!_.isPlainObject(args[args.length-1])) {
+            args.push({})
+          }
         }
 
         // Assuming options with injectables are at the very end (or, thus,
@@ -46,7 +57,7 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
               return obj[prop]
             }
 
-            // Thenm, then check if the property was included/overwritten by args
+            // Then, then check if the property was included/overwritten by args
             if (Object.keys(opts.defaults).includes(propString)) {
               return opts.defaults[propString]
             }
@@ -65,14 +76,11 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
   }
   
   switch (opts.resolve) {
-    case 'proxy': {
+    case 'identity': {
       // A proxied class will return the class
       return proxy
     }
-    case 'instantiate': {
-      return new proxy()
-    }
-    case 'wrap': {
+    case 'instance': {
       return (...args: any[]) => new proxy(...args)
     }
   }

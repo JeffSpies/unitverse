@@ -10,8 +10,8 @@ export interface DoWhileConfig {
 export class DoWhile extends Task {
   name = 'dowhile'
 
-  doWorkflow
-  whileWorkflow
+  doWorkflow: Workflow
+  whileWorkflow: Workflow
 
   constructor(tasks: Task | Task[] | Workflow, whilst: Task | Task[] | Workflow, config: DoWhileConfig = {}) {
     super(tasks, whilst, config)

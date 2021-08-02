@@ -7,7 +7,7 @@ const RESERVED_WORDS = ['constructor', 'length']
 const ClassOptionDefaults: ClassOptions = {
   inject: true,
   isLazy: true,
-  resolve: 'proxy',
+  resolve: 'identity',
   defaults: {}
 }
 
@@ -32,6 +32,13 @@ export class Container {
   
   constructor() {
     this.registry = <Registry>{}
+  }
+
+  public contains (name: string) {
+    if (_.has(this.registry, _.lowerCase(name))) {
+      return true
+    }
+    return false
   }
 
   private isReserved (name) {
@@ -107,12 +114,7 @@ export class Container {
       defaults,
       ...opts
     }
-    return this.register(
-      name,
-      obj,
-      opts,
-      asClass
-    )
+    return this.register(name, obj, opts, asClass)
   }
 
   public registerFunction (
@@ -126,12 +128,7 @@ export class Container {
       defaults,
       ...opts
     }
-    return this.register(
-      name,
-      obj,
-      opts,
-      asFunction
-    )
+    return this.register(name, obj, opts, asFunction)
   }
 
   public registerValue(name: string, obj) {

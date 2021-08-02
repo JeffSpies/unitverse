@@ -45,7 +45,7 @@ describe('workflows, wrappers, tasks', () => {
     const wrapped = new Workflow(
       [ add1, add2 ],
       {
-        wrapper: (c, o) => new Wrapper(c, o)
+        Wrapper
       }
     )
     expect(await wrapped.run(1)).to.equal(9)
@@ -53,9 +53,11 @@ describe('workflows, wrappers, tasks', () => {
     const wrappedWithConfig = new Workflow(
       [ add1, add2 ],
       {
-        wrapper: (c, o) => new Wrapper(c, o),
-        wrapperConfig: {
-          logTiming: true
+        Wrapper,
+        WrapperConfig: {
+          logTiming: true,
+          logInput: true,
+          logOutput: true
         }
       }
     )
