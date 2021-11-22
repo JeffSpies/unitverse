@@ -73,9 +73,14 @@ export class Engine {
   inject(fn: Function) {
     const injectedFunction = this.scope.asFunction(fn)
     const tasks = injectedFunction()
-    const WorkflowClass = this.scope.resolve('Workflow')
-
-    this.workflow = new WorkflowClass(tasks, { name: 'EngineWorkflow' })
+    // console.log(tasks instanceof Wrapper, tasks.task instanceof Workflow, tasks.task) // this is effectively returning a workflow; deal with theis next
+    if (tasks !instanceof Workflow || (tasks instanceof Wrapper && tasks.task !instanceof Workflow)) {
+      // console.log('here')
+      const WorkflowClass = this.scope.resolve('Workflow')
+      this.workflow = new WorkflowClass(tasks, { name: 'EngineWorkflow' })
+    } else {
+      this.workflow = tasks
+    }
   }
 
   run(input) {

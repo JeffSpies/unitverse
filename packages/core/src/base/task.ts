@@ -2,6 +2,7 @@
 
 import functionName from '../util/function-name'
 import _ from 'lodash'
+import { Workflow } from '../tasks/workflow'
 
 interface TaskMetadata {
   args?: any
@@ -24,10 +25,10 @@ export abstract class Task {
   }
 
   public workflowify (obj: Task | Task[] | any, config) {
-    const workflowCls = this.unitverse.parentWorkflow['prototype']
+    // const workflowCls = this.unitverse.parentWorkflow['prototype']
 
     let taskList
-    if (obj instanceof workflowCls) {
+    if (obj instanceof Workflow) {
       // todo Change the wrapper if config differs than what is provided?
       return obj
     } else if (obj instanceof Task) {
