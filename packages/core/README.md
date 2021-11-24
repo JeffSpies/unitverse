@@ -2,7 +2,7 @@
 
 ## Architecture 0.2
 
-Engines register things.
+The Engine is a dependency injector and registers services and tasks. One of those tasks that it must have--or it will implictely register--is a Workflow.
 
 Workflows build streams of Tasks. 
 

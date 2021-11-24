@@ -2,7 +2,7 @@
 
 import functionName from '../util/function-name'
 import _ from 'lodash'
-import { Workflow } from '../tasks/workflow'
+import { Workflow, Workflowable } from '../internal' // ./base/task/workflow
 
 interface TaskMetadata {
   args?: any
@@ -14,8 +14,6 @@ interface TaskMetadata {
 export abstract class Task {
   unitverse: TaskMetadata
   
-  static inject: boolean = false
-
   constructor(...args: any) {
     this.unitverse = {}
     this.unitverse.args = args
@@ -24,20 +22,26 @@ export abstract class Task {
       functionName(this.constructor)
   }
 
-  public workflowify (obj: Task | Task[] | any, config) {
+  public workflowify (obj: Workflowable, config) {
     // const workflowCls = this.unitverse.parentWorkflow['prototype']
+    console.log(this.unitverse)
+    // When calling this from a task, we can't get the task's workflow, because it hasn't been set yet
+    const workflowCls = config.Workflow || this.unitverse.parentWorkflow.__class__
 
     let taskList
     if (obj instanceof Workflow) {
       // todo Change the wrapper if config differs than what is provided?
       return obj
-    } else if (obj instanceof Task) {
-      taskList = [taskList]
+    } else if (obj instanceof Task ) {
+      taskList = [obj]
     } else if (_.isArray(obj)) {
       taskList = obj
+    } else {
+      throw new Error('That type is not currently workflowable')
     }
     // todo build workflowConfig if direct parameters are not provided
-    return new config.Workflow(taskList, config.workflowConfig)
+
+    return new workflowCls(taskList, config.workflowConfig)
   }
 
   public setParentWorkflow(workflow) {

@@ -1,4 +1,4 @@
-import { Task } from '../base/task'
+import { Task } from '../internal'
 import _ from 'lodash'
 
 interface WrapperConfig {

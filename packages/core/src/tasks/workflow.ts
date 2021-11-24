@@ -4,8 +4,12 @@ import async from 'async'
 
 import metadata from '../util/metadata'
 
-import { Task } from '../base/task'
+import { makeTask, Task } from '../internal'
 import functionName from '../util/function-name'
+
+type TaskLike = Task | Workflow | Function
+type TaskLikeList = (TaskLike)[]
+export type Workflowable = TaskLike | TaskLikeList
 
 export interface WorkflowConfig {
   Wrapper?: any
@@ -15,38 +19,53 @@ export interface WorkflowConfig {
 export class Workflow extends Task {
   tasks: any = []
 
-  Wrapper: any
-  WrapperConfig: any
+  wrapperClass: any
+  wrapperConfig: any
 
   options
 
   constructor (tasks: any = [], options: WorkflowConfig = {}){
-    super(tasks, options)
-    const { Wrapper, WrapperConfig, name } = options
+    super(tasks, options);
+    this.setParentWorkflow(this);
+
+    // The following are likely coming from Engine's DI
+    const { Wrapper, WrapperConfig, name } = options;
+    console.log(Wrapper)
+
+    this.wrapperClass = Wrapper;
+    this.wrapperConfig = WrapperConfig || {};
+
+    this.add(tasks);
     
-    this.Wrapper = Wrapper
-    this.WrapperConfig = WrapperConfig || {}
-    this.add(tasks)
-    if (this.Wrapper) {
-      return new this.Wrapper(this, this.WrapperConfig)
+    if (this.wrapperClass) {
+      return new this.wrapperClass(this, this.wrapperConfig);
     }
   }
 
-  private add ( tasks: Task | Task[]): boolean {
+  private add ( tasks: Workflowable): boolean {
     if (!_.isArray(tasks)) {
       tasks = [ tasks ]
     }
     return this.addArray(tasks)
   }
 
-  private addArray (tasks: (Function | Task)[]): boolean {
+  private addArray (tasks: Workflowable[]): boolean {
     const results = []
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i]
       if (task instanceof Task) {
         results.push(this.addTask(task))
+      } else if (_.isFunction(task)) {
+        const NewTaskClass = makeTask(
+          function Tmp () {
+            return task
+          }
+        )
+        results.push(
+          this.addTask(new NewTaskClass())
+        )
       } else {
-        results.push(this.addFunction(task))
+        throw new Error('That type is not currently supported')
       }
     }
     return _.every(results)
@@ -58,15 +77,10 @@ export class Workflow extends Task {
     return true
   }
 
-  private addFunction(task: Function): boolean {
-    return true
-  }
-
-  private wrapAndPushTask (task: Task) {
-    if (this.Wrapper) {
-      task = new this.Wrapper(task, this.WrapperConfig)
-    }
-    this.tasks.push(task)
+  private wrapAndPushTask (task: Task): void {
+    this.tasks.push(
+      new this.wrapperClass(task, this.wrapperConfig)
+    )
   }
 
   public async run (input: any): Promise<Function> {

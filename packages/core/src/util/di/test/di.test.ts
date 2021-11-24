@@ -96,13 +96,16 @@ describe('di', () => {
       
       class Test {
         test1
+        testNotThere
         x
         constructor (x, options: Options4 = {}) {
           this.x = x
-          const { test1 } = options
+          //@ts-ignore
+          const { test1, testNotThere } = options
           const Test1 = test1
           const instance = new Test1()
           this.test1 = instance.fn()
+          this.testNotThere = testNotThere
         }
     
         fn(y) {
@@ -117,6 +120,7 @@ describe('di', () => {
       expect(instance instanceof Test).to.be.true
       expect(instance.fn(1)).to.equal(7)
       expect(instance.fn(52)).to.equal(58)
+      expect(instance.testNotThere).to.be.undefined
     })
 
     it('nested dependencies', () => {

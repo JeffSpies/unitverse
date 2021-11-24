@@ -1,4 +1,4 @@
-import { Task } from "../base/task"
+import { Task } from "../internal"
 import functionName from "../util/function-name"
 
 export interface MakeTaskConfig {

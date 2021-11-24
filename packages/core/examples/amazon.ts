@@ -1,56 +1,55 @@
-import { Engine} from '../src/engine'
+import { Engine} from '../src/internal'
 
-import { Wrapper } from '../src/tasks/wrapper'
-import { Get } from '../src/tasks/get'
-import { Log } from '../src/tasks/log'
+import { Wrapper } from '../src/internal'
+import { Get } from '../src/internal'
+import { Log } from '../src/internal'
 
 
-// import { DoWhile } from '../src/tasks/do-while'
+import { DoWhile } from '../src/tasks/do-while'
 import { Identity } from '../src/tasks/identity'
-import { Task } from '../src/base/task'
-
 import { makeTask } from '../src/helpers/makeTask'
 
-
 (async () => {
-  // const Incrementer = makeTask(
-  //   function Incrementer (i) {
-  //     return function incrementer (input) {
-  //       console.log(i, input)
-  //       return input + 1
-  //     }
-  //   }
-  // )
+ const Incrementer = makeTask(
+    function Incrementer () {
+      return function incrementer (input: number) {
+        return input + 1
+      }
+    }
+  )
 
-  // const Conditional = makeTask(
-  //   function Conditional (i) {
-  //     return function conditional (input) {
-  //       console.log(i, input)
-  //       return input < 5
-  //     }
-  //   }
-  // )
-
-  const engine = new Engine ();
-  engine.register({
+  const Conditional = makeTask(
+    function Conditional () {
+      return function conditional (input: number) {
+        return input < 5
+      }
+    }
+  )
+  const result = new Engine ({
+    // Workflow is implicitely registered, but can be overridden
     Identity,
     Get,
     Log,
-    // DoWhile,
-    // Incrementer,
-    // Conditional,
-    Wrapper: [Wrapper, { logTiming: false }]                                                                                                                                                                                                                                                                                                                                                                            // defaults happen too magically, this should be { config { logTiming: true }} or [null, {logTiming: true}]
-  });
-
-  engine.inject(({ Get, get, Log, Workflow, DoWhile, Incrementer, Conditional}) => {
-    return new Workflow([
+    DoWhile,
+    Incrementer,
+    Conditional,
+    Wrapper: [Wrapper, { logOutput: true }]                                                                                                                                                                                                                                                                                                                                                                            // defaults happen too magically, this should be { config { logTiming: true }} or [null, {logTiming: true}]
+  }, ({ Get, get, Log }) => {
+    return [
       get('a'),
-      // new DoWhile([new Incrementer()], [new Conditional()]),
-      new Log('Result is'),
-      new Log()
-    ])
-  });
+      // ToDO The following gets called, and then added to the outer workflow, where the parentWorkflow is set
+      new DoWhile([Incrementer], [Conditional])
+      // new DoWhile((i:any) => i + 1, (i:any) => i < 5),
+    ]
+  }).run({a:1});
 
   // engine.run('https://www.amazon.com/gp/product/B07RJ1PFB6/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1')
-  engine.run({a:1})
 })()
+
+// new Engine({
+//  Get 
+// }, ({ Get }) => {
+// return [
+//   get('a');
+// ]
+// })

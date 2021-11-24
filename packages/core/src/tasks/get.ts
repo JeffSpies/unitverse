@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { makeTask } from '../helpers/makeTask'
+import { makeTask } from '../internal'
 
 export const Get = makeTask(
   function Get (path, defaultValue:any=undefined) {

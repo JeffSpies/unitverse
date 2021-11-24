@@ -12,7 +12,9 @@
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "lerna": "^4.0.0",
+    "madge": "^5.0.1",
     "mocha": "^9.0.2",
+    "nodemon": "^2.0.15",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
   },
@@ -29,7 +31,6 @@
     "express": "^4.17.1",
     "lodash": "^4.17.21",
     "npm-cache": "^0.7.0",
-    "npm-watch": "^0.11.0",
     "object-hash": "^2.2.0",
     "p-event": "^4.2.0",
     "p-is-promise": "^3.0.0",
@@ -44,24 +45,15 @@
     "query-string": "^7.0.0",
     "serialize-javascript": "^5.0.1",
     "socket.io": "^4.1.2",
-    "url-parse": "^1.5.1",
-    "watch": "^1.0.2"
-  },
-  "watch": {
-    "amazon": {
-      "patterns": [
-        "src"
-      ],
-      "legacyWatch": true
-    }
+    "url-parse": "^1.5.1"
   },
   "scripts": {
-    "watch": "watch \"ts-node examples/amazon.ts\" ./src ./examples",
+    "mon": "nodemon --watch src --watch examples -e ts --exec \"ts-node examples/amazon.ts\"",
     "amazon": "ts-node examples/amazon.ts",
     "spec": "ts-node examples/spec.ts",
     "di": "ts-node diindex.ts",
     "test": "mocha ./**/*.test.ts --reporter spec --require ts-node/register --exit",
     "test1": "mocha --reporter spec --require ts-node/register --exit",
-    "test-get": "yarn run test1 **/*/get.test.ts"
+    "test-get": "yarn run test1 **/*/di.test.ts"
   }
 }

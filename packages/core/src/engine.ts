@@ -1,22 +1,18 @@
 import _ from 'lodash'
-import isPromise from 'p-is-promise'
-
-// import { Engine as EngineBase } from './engine'
 import { Container } from './util/di/'
-import { Service } from './base/service'
-import { Task } from './base/task'
-import { Workflow } from './tasks/workflow'
-import { Wrapper } from './tasks/wrapper'
+import { Service, Task, Workflow } from './internal'
 
 export class Engine {
   scope: any
   workflow: any
 
-  constructor() {
+  constructor(dependencies: Object, fn: Function) {
     this.scope = new Container()
+    this.register(dependencies)
+    this.inject(fn)
   }
 
-  registerValue(name: string, obj: any) {
+  private registerValue(name: string, obj: any) {
     this.scope.registerValue(name, obj, {
       resolve: 'identity',
       inject: false,
@@ -24,7 +20,7 @@ export class Engine {
     })
   }
 
-  registerTask(name: string, cls: any, defaults?) {
+  private registerTask(name: string, cls: any, defaults?) {
     this.scope.registerClass(_.upperFirst(name), cls, defaults, {
       resolve: 'identity',
       inject: true,
@@ -35,17 +31,18 @@ export class Engine {
       inject: true,
       isLazy: true,
     })
+    // console.log(this.scope.registry)
   }
 
-  registerService(name: string, cls: any, defaults?) {
+  private registerService(name: string, cls: any, defaults?) {
     this.scope.registerClass(_.upperFirst(name), cls, defaults, {
       resolve: 'identity',
       inject: true,
       isLazy: true,
     })
   }
-
-  register(dependencies: Object) {
+  
+  public register(dependencies: Object): Engine {
     let obj: any,
         args: any
     
@@ -68,22 +65,19 @@ export class Engine {
     if (!this.scope.contains('Workflow')) {
       this.registerTask('workflow', Workflow)
     }
+
+    return this;
   }
 
-  inject(fn: Function) {
+  public inject(fn: Function): Engine {
     const injectedFunction = this.scope.asFunction(fn)
+    const WorkflowClass = this.scope.resolve('Workflow')
     const tasks = injectedFunction()
-    // console.log(tasks instanceof Wrapper, tasks.task instanceof Workflow, tasks.task) // this is effectively returning a workflow; deal with theis next
-    if (tasks !instanceof Workflow || (tasks instanceof Wrapper && tasks.task !instanceof Workflow)) {
-      // console.log('here')
-      const WorkflowClass = this.scope.resolve('Workflow')
-      this.workflow = new WorkflowClass(tasks, { name: 'EngineWorkflow' })
-    } else {
-      this.workflow = tasks
-    }
+    this.workflow = new WorkflowClass(tasks, { name: 'EngineWorkflow' }) 
+    return this;
   }
 
-  run(input) {
+  run(input: any): any {
     return this.workflow.run(input)
   }
 }

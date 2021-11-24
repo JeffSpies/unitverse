@@ -1,7 +1,7 @@
 import { Workflow } from './workflow'
 import { expect } from 'chai'
 import { Task } from '../base/task'
-import { Wrapper } from './wrapper'
+import { Wrapper } from '../internal'
 
 class Add extends Task {
   value: number
