@@ -1,60 +1,97 @@
-import _, { isObject } from 'lodash'
-import isPromise from 'p-is-promise'
-import async from 'async'
+import _ from 'lodash'
+import { Container } from '../util/di/'
+import { makeTask, Service, Task } from '../internal'
 
-import metadata from '../util/metadata'
-
-import { makeTask, Task } from '../internal'
-import functionName from '../util/function-name'
-
-type TaskLike = Task | Workflow | Function
-type TaskLikeList = (TaskLike)[]
-export type Workflowable = TaskLike | TaskLikeList
-
-export interface WorkflowConfig {
-  Wrapper?: any
-  WrapperConfig?: any
-  name?: string
-}
 export class Workflow extends Task {
+  scope: any
   tasks: any = []
 
   wrapperClass: any
   wrapperConfig: any
 
-  options
+  constructor(fn: Function, dependencies: Object, options: any = {}) {
+    super (fn, dependencies, options)
 
-  constructor (tasks: any = [], options: WorkflowConfig = {}){
-    super(tasks, options);
-    this.setParentWorkflow(this);
+    this.scope = options.scope || this.unitverse?.parentWorkflow?.scope || new Container()
 
-    // The following are likely coming from Engine's DI
+    if(!this.scope.resolve(this.unitverse.name)) {
+      this.register({
+        Workflow,
+        ...dependencies
+      })
+
+      const resolvedEngineClass = this.scope.resolve(this.unitverse.name)
+
+      return new resolvedEngineClass(fn, dependencies, {
+        ...options,
+        scope: this.scope
+      })
+    }
+
     const { Wrapper, WrapperConfig, name } = options;
-    console.log(Wrapper)
 
     this.wrapperClass = Wrapper;
     this.wrapperConfig = WrapperConfig || {};
 
-    this.add(tasks);
+    this.inject(fn)
+  }
+  
+  public register(dependencies: Object): void {
+    let obj: any,
+        args: any
     
-    if (this.wrapperClass) {
-      return new this.wrapperClass(this, this.wrapperConfig);
+    for(const [name, value] of Object.entries(dependencies)) {
+      obj = value
+      args = {}
+      if (_.isArray(obj)) {
+        [obj, args] = obj
+      }
+
+      if ( obj.prototype instanceof Service ) {
+        this.scope.registerClass(_.upperFirst(name), obj, args, {
+          resolve: 'identity',
+          inject: true,
+          isLazy: true,
+        })
+      } else if (obj.prototype instanceof Task) {
+        this.scope.registerClass(_.upperFirst(name), obj, args, {
+          resolve: 'identity',
+          inject: true,
+          isLazy: false,
+        })
+        this.scope.registerClass(_.lowerFirst(name), obj, args, {
+          resolve: 'instance',
+          inject: true,
+          isLazy: true,
+        })
+      } else {
+        this.scope.registerValue(name, obj, {
+          resolve: 'identity',
+          inject: false,
+          isLazy: false
+        })
+      }
     }
   }
 
-  private add ( tasks: Workflowable): boolean {
-    if (!_.isArray(tasks)) {
-      tasks = [ tasks ]
-    }
-    return this.addArray(tasks)
+  private addTask (task: Task): boolean {
+    task.setParentWorkflow(this)
+    this.tasks.push(
+      new this.wrapperClass(task, this.wrapperConfig)
+    )
+    return true
   }
 
-  private addArray (tasks: Workflowable[]): boolean {
-    const results = []
+  public inject(fn: Function): void {
+    const injectedFunction = this.scope.asFunction(fn)
+    const tasks = injectedFunction()
+    const results = [];
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i]
       if (task instanceof Task) {
-        results.push(this.addTask(task))
+        results.push(
+          this.addTask(task)
+        )
       } else if (_.isFunction(task)) {
         const NewTaskClass = makeTask(
           function Tmp () {
@@ -68,22 +105,13 @@ export class Workflow extends Task {
         throw new Error('That type is not currently supported')
       }
     }
-    return _.every(results)
+
+    if (!_.every(results)) {
+      throw new Error('Task didnt push')
+    }
   }
 
-  private addTask (task: Task): boolean {
-    task.setParentWorkflow(this)
-    this.wrapAndPushTask(task)
-    return true
-  }
-
-  private wrapAndPushTask (task: Task): void {
-    this.tasks.push(
-      new this.wrapperClass(task, this.wrapperConfig)
-    )
-  }
-
-  public async run (input: any): Promise<Function> {
+  public async run(input: any): Promise<any> {
     let result: any = input
     for ( let i = 0; i < this.tasks.length; i++ ) {
       result = await this.tasks[i].run(result)

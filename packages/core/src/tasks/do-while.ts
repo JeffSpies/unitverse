@@ -1,4 +1,4 @@
-import { Task, Workflow, Workflowable } from '../internal'
+import { Task, Workflow } from '../internal'
 export interface DoWhileConfig {
   Workflow?: any
   Wrapper?: any
@@ -11,7 +11,7 @@ export class DoWhile extends Task {
   doWorkflow: Workflow
   whileWorkflow: Workflow
 
-  constructor(tasks: Workflowable, whilst: Workflowable, config: DoWhileConfig = {}) {
+  constructor(tasks: any, whilst: any, config: DoWhileConfig = {}) {
     super(tasks, whilst, config)
     this.doWorkflow = this.workflowify(tasks, config)
     this.whileWorkflow = this.workflowify(whilst, config)

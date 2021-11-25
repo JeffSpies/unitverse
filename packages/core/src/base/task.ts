@@ -2,7 +2,7 @@
 
 import functionName from '../util/function-name'
 import _ from 'lodash'
-import { Workflow, Workflowable } from '../internal' // ./base/task/workflow
+import { Workflow } from '../internal' // ./base/task/workflow
 
 interface TaskMetadata {
   args?: any
@@ -15,18 +15,18 @@ export abstract class Task {
   unitverse: TaskMetadata
   
   constructor(...args: any) {
-    this.unitverse = {}
-    this.unitverse.args = args
-    this.unitverse.name = 
-      _.get(args, `[${args.length-1}].name`) || 
-      functionName(this.constructor)
+    this.unitverse = {
+      args,
+      name: _.get(args, `[${args.length-1}].name`) || functionName(this.constructor)
+    }
   }
 
-  public workflowify (obj: Workflowable, config) {
+  public workflowify (obj: any, config) {
+    console.log('here')
     // const workflowCls = this.unitverse.parentWorkflow['prototype']
-    console.log(this.unitverse)
     // When calling this from a task, we can't get the task's workflow, because it hasn't been set yet
-    const workflowCls = config.Workflow || this.unitverse.parentWorkflow.__class__
+    console.log(this.unitverse)
+    const workflowCls = this.unitverse.parentWorkflow?.scope?.resolve('Workflow')
 
     let taskList
     if (obj instanceof Workflow) {
