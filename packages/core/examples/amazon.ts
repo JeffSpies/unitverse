@@ -25,23 +25,24 @@ import { makeTask } from '../src/helpers/makeTask'
       }
     }
   )
-  const result = new Workflow (({ Get, get, Log }) => {
-    return [
-      get('a'),
-      // ToDO The following gets called, and then added to the outer workflow, where the parentWorkflow is set
-      new DoWhile([Incrementer], [Conditional])
-      // new DoWhile((i:any) => i + 1, (i:any) => i < 5),
-    ]
-  }, {
-    // Workflow is implicitely registered, but can be overridden
-    Identity,
-    Get,
-    Log,
-    DoWhile,
-    Incrementer,
-    Conditional,
-    Wrapper: [Wrapper, { logOutput: true }]                                                                                                                                                                                                                                                                                                                                                                            // defaults happen too magically, this should be { config { logTiming: true }} or [null, {logTiming: true}]
-  }).run({a:1});
+  const result = new Workflow (
+    ({ Get, get, Log }) => {
+      return [
+        get('a'),
+        new DoWhile(() => [Incrementer], () => [Conditional])
+        // new DoWhile((i:any) => i + 1, (i:any) => i < 5),
+      ]
+    }, {
+      // Workflow is implicitely registered, but can be overridden
+      Identity,
+      Get,
+      Log,
+      DoWhile,
+      Incrementer,
+      Conditional,
+      Wrapper: [Wrapper, { logOutput: true }]                                                                                                                                                                                                                                                                                                                                                                            // defaults happen too magically, this should be { config { logTiming: true }} or [null, {logTiming: true}]
+    }
+  ).run({a:1});
 
   // engine.run('https://www.amazon.com/gp/product/B07RJ1PFB6/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1')
 })()
