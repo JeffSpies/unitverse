@@ -1,6 +1,8 @@
 import _ from 'lodash'
-import { asClass, ClassOptions } from './resolvers/class'
-import { asFunction, FunctionOptions } from './resolvers/function'
+import { openStdin } from 'process'
+import { asClass as asClassResolver, ClassOptions } from './resolvers/class'
+import { asFunction as asFunctionResolver, FunctionOptions } from './resolvers/function'
+import { asValue as asValueResolver, ValueOptions } from './resolvers/value'
 
 const RESERVED_WORDS = ['constructor', 'length']
 
@@ -11,11 +13,13 @@ const ClassOptionDefaults: ClassOptions = {
   defaults: {}
 }
 
-const FunctionptionDefaults: FunctionOptions = {
+const FunctionOptionDefaults: FunctionOptions = {
   inject: true,
   isLazy: true,
   defaults: {}
 }
+
+const ValueOptionDefaults: ValueOptions = {}
 
 interface StoredObject {
   obj?: any
@@ -48,7 +52,7 @@ export class Container {
     return false
   }
 
-  private register(
+  private connectResolver(
     name: string,
     obj: any,
     opts,
@@ -82,6 +86,7 @@ export class Container {
     if (stored.isAlias) {
       return this.resolve(stored.obj)
     }
+    console.log('## Resolving', name, stored.obj)
     if (stored.opts.isLazy) {
       // Let's undo the laziness
       this.registry[name].obj = stored.obj()
@@ -103,6 +108,9 @@ export class Container {
     return true
   }
 
+  /**
+   * defaults The default contructor arguments used when instantiate the class
+   */
   public registerClass(
     name: string,
     obj: any,
@@ -114,7 +122,7 @@ export class Container {
       defaults,
       ...opts
     }
-    return this.register(name, obj, opts, asClass)
+    return this.connectResolver(name, obj, opts, asClassResolver)
   }
 
   public registerFunction (
@@ -124,19 +132,23 @@ export class Container {
     opts?: FunctionOptions
   ) {
     opts = {
-      ...FunctionptionDefaults,
+      ...FunctionOptionDefaults,
       defaults,
       ...opts
     }
-    return this.register(name, obj, opts, asFunction)
+    return this.connectResolver(name, obj, opts, asFunctionResolver)
   }
 
-  public registerValue(name: string, obj) {
-    // todo use this.register
-    this.registry[name] = <StoredObject>{ obj }
-    return true
+  public registerValue(
+    name: string,
+    obj: any,
+  ) {
+    return this.connectResolver(name, obj, {}, asValueResolver)
   }
 
+  /**
+   * defaults The default contructor arguments used when instantiate the class
+   */
   public asClass(cls: any, defaults: any = {}, opts: ClassOptions) {
     opts = {
       ...ClassOptionDefaults,
@@ -144,19 +156,23 @@ export class Container {
       isLazy: false,
       ...opts
     }
-    return asClass(this, cls, opts)
+    return asClassResolver(this, cls, opts)
   }
 
-  public asFunction(cls, defaults: any = {}, opts) {
+  /**
+   * defaults The default contructor arguments used when instantiate the class
+   */
+  public asFunction(fn, defaults: any = {}, opts: FunctionOptions) {
     opts = {
-      ...FunctionptionDefaults,
+      ...FunctionOptionDefaults,
       defaults,
       isLazy: false,
       ...opts
     }
-    return asFunction(this, cls, opts)
+    return asFunctionResolver(this, fn, opts)
   }
 
-  asValue(obj: any) {
-  }
+  // asValue(obj: any, opts) {
+  //   opts
+  // }
 }

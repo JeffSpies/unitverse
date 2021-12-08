@@ -1,8 +1,5 @@
 import { Task, Workflow } from '../internal'
 export interface DoWhileConfig {
-  Workflow?: any
-  Wrapper?: any
-  wrapperConfig?: any
 }
 
 export class DoWhile extends Task {
@@ -11,10 +8,14 @@ export class DoWhile extends Task {
   doWorkflow: Workflow
   whileWorkflow: Workflow
 
-  constructor(tasks: any, whilst: any, config: DoWhileConfig = {}) {
-    super(tasks, whilst, config)
-    this.doWorkflow = this.workflowify(tasks, config)
-    this.whileWorkflow = this.workflowify(whilst, config)
+  constructor(tasks: Function, whilst: Function, options: any = {}) {
+    super(tasks, whilst)
+    console.log('# Constructing do-while')
+    const { workflow } = options
+    const workflowInstance = workflow
+    console.log('# Workflow Instance')
+    this.doWorkflow = workflowInstance.newWorkflow(tasks)
+    this.whileWorkflow = workflowInstance.newWorkflow(whilst)
   }
 
   async run (input: any) {

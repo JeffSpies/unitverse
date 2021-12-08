@@ -12,20 +12,15 @@ export class Workflow extends Task {
   constructor(fn: Function, dependencies: Object, options: any = {}) {
     super (fn, dependencies, options)
 
-    this.scope = options.scope || this.unitverse?.parentWorkflow?.scope || new Container()
+    this.scope = options.scope || new Container() // add parent scope in mddle
 
     if(!this.scope.resolve(this.unitverse.name)) {
       this.register({
         Workflow,
         ...dependencies
       })
-
-      const resolvedEngineClass = this.scope.resolve(this.unitverse.name)
-
-      return new resolvedEngineClass(fn, dependencies, {
-        ...options,
-        scope: this.scope
-      })
+      this.scope.registerValue('workflow', this)
+      return this.newWorkflow(fn, {}, options)
     }
 
     const { Wrapper, WrapperConfig, name } = options;
@@ -65,13 +60,17 @@ export class Workflow extends Task {
           isLazy: true,
         })
       } else {
-        this.scope.registerValue(name, obj, {
-          resolve: 'identity',
-          inject: false,
-          isLazy: false
-        })
+        this.scope.registerValue(name, obj)
       }
     }
+  }
+
+  public newWorkflow(fn:any, dependencies = {}, options = {}) {
+    const resolvedEngineClass = this.scope.resolve(this.unitverse.name)
+    return new resolvedEngineClass(fn, dependencies, {
+      ...options,
+      scope: this.scope
+    })
   }
 
   private addTask (task: Task): boolean {
@@ -84,6 +83,7 @@ export class Workflow extends Task {
 
   public inject(fn: Function): void {
     const injectedFunction = this.scope.asFunction(fn)
+    // todo have to always inject into function?
     const tasks = injectedFunction()
     const results = [];
     for (let i = 0; i < tasks.length; i++) {

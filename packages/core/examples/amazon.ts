@@ -26,10 +26,14 @@ import { makeTask } from '../src/helpers/makeTask'
     }
   )
   const result = new Workflow (
-    ({ Get, get, Log }) => {
+    ({ Get, get, Log, DoWhile, Incrementer, Conditional }) => {
       return [
         get('a'),
-        new DoWhile(() => [Incrementer], () => [Conditional])
+        new DoWhile(() => [
+          new Incrementer()
+        ], () => [
+          new Conditional()
+        ])
         // new DoWhile((i:any) => i + 1, (i:any) => i < 5),
       ]
     }, {
