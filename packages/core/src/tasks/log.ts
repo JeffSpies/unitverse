@@ -11,7 +11,7 @@ export class Log extends Task{
   message: string | Function
 
   constructor(message?: string | Function, config?:LogConfig) {
-    super()
+    super(message, config)
     this.message = message
   }
 

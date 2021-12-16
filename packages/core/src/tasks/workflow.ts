@@ -12,22 +12,25 @@ export class Workflow extends Task {
   constructor(fn: Function, dependencies: Object, options: any = {}) {
     super (fn, dependencies, options)
 
-    this.scope = options.scope || new Container() // add parent scope in mddle
+    this.scope = options.scope || new Container() // TODO add parent scope in mddle
 
+    // If a workflow hasn't been injected
     if(!this.scope.resolve(this.unitverse.name)) {
+      // Then register a workflow
       this.register({
         Workflow,
         ...dependencies
       })
+      // Replace the lower case w "workflow" instance
       this.scope.registerValue('workflow', this)
+      // And create a new Object
       return this.newWorkflow(fn, {}, options)
     }
 
-    const { Wrapper, WrapperConfig, name } = options;
-
+    // Inject the following tasks
+    const { Wrapper, WrapperConfig } = options;
     this.wrapperClass = Wrapper;
     this.wrapperConfig = WrapperConfig || {};
-
     this.inject(fn)
   }
   
@@ -46,7 +49,12 @@ export class Workflow extends Task {
         this.scope.registerClass(_.upperFirst(name), obj, args, {
           resolve: 'identity',
           inject: true,
-          isLazy: true,
+          isLazy: false,
+        })
+        this.scope.registerClass(_.lowerFirst(name), obj, args, {
+          resolve: 'instance',
+          inject: true,
+          isLazy: false,
         })
       } else if (obj.prototype instanceof Task) {
         this.scope.registerClass(_.upperFirst(name), obj, args, {
@@ -54,11 +62,11 @@ export class Workflow extends Task {
           inject: true,
           isLazy: false,
         })
-        this.scope.registerClass(_.lowerFirst(name), obj, args, {
-          resolve: 'instance',
-          inject: true,
-          isLazy: true,
-        })
+        // this.scope.registerClass(_.lowerFirst(name), obj, args, {
+        //   resolve: 'instance',
+        //   inject: true,
+        //   isLazy: true,
+        // })
       } else {
         this.scope.registerValue(name, obj)
       }
@@ -66,8 +74,9 @@ export class Workflow extends Task {
   }
 
   public newWorkflow(fn:any, dependencies = {}, options = {}) {
-    const resolvedEngineClass = this.scope.resolve(this.unitverse.name)
-    return new resolvedEngineClass(fn, dependencies, {
+    // Here we're using the resolved workflow
+    const resolvedWorkflowClass = this.scope.resolve(this.unitverse.name)
+    return new resolvedWorkflowClass(fn, dependencies, {
       ...options,
       scope: this.scope
     })
@@ -88,6 +97,7 @@ export class Workflow extends Task {
     const results = [];
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i]
+      console.log(task.name, task)
       if (task instanceof Task) {
         results.push(
           this.addTask(task)
@@ -96,6 +106,9 @@ export class Workflow extends Task {
         const NewTaskClass = makeTask(
           function Tmp () {
             return task
+          },
+          {
+            name: task.name || 'task'
           }
         )
         results.push(

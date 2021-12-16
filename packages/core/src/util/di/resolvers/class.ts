@@ -57,7 +57,7 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
               return obj[prop]
             }
 
-            // Then, then check if the property was included/overwritten by args
+            // Then, check if the property was included/overwritten by args
             if (Object.keys(opts.defaults).includes(propString)) {
               return opts.defaults[propString]
             }

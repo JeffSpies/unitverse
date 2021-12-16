@@ -86,12 +86,15 @@ export class Container {
     if (stored.isAlias) {
       return this.resolve(stored.obj)
     }
-    console.log('## Resolving', name, stored.obj)
-    if (stored.opts.isLazy) {
-      // Let's undo the laziness
+    // if (stored.opts.isLazy) {
+    //   // Let's undo the laziness
+    //   this.registry[name].obj = stored.obj()
+    //   this.registry[name].opts.isLazy = false
+    //   return stored.obj
+    // }
+    if (stored.opts.resolve === 'instance') {
       this.registry[name].obj = stored.obj()
-      this.registry[name].opts.isLazy = false
-      return stored.obj
+      this.registry[name].opts.resolve = 'identity'
     }
     return stored.obj
   }

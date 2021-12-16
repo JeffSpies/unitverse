@@ -10,12 +10,10 @@ export class DoWhile extends Task {
 
   constructor(tasks: Function, whilst: Function, options: any = {}) {
     super(tasks, whilst)
-    console.log('# Constructing do-while')
     const { workflow } = options
     const workflowInstance = workflow
-    console.log('# Workflow Instance')
-    this.doWorkflow = workflowInstance.newWorkflow(tasks)
-    this.whileWorkflow = workflowInstance.newWorkflow(whilst)
+    this.doWorkflow = workflowInstance.newWorkflow(tasks, {}, { name: 'doWhile:do'})
+    this.whileWorkflow = workflowInstance.newWorkflow(whilst, {}, { name: 'doWhile:while'})
   }
 
   async run (input: any) {

@@ -21,4 +21,6 @@ export class Emitter extends AbstractEmitter {
   emit(topic: string | string[], message: any): void {
     this.emitter.emit(topic, message)
   }
+
+  // TODO close?
 }
