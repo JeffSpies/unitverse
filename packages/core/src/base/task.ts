@@ -12,31 +12,33 @@ interface MakeTaskConfig {
 interface TaskMetadata {
   args?: any
   name?: string
-  parent?:any
+  parent?: any
   level?: number
 }
 
 export abstract class Task {
   unitverse: TaskMetadata
-  
-  public static events () {
+
+  public static events() {
 
   }
 
-  public static dependencies () {
+  public static dependencies() {
 
   }
 
   constructor(...args: any) {
+  
     this.unitverse = {
       args,
-      name: _.get(args, `[${args.length-1}].name`) || this.constructor ? functionName(this.constructor) : 'madeFunction'
+      name: 'DefaultTaskName'
+      // name: _.get(args, `[${args.length - 1}].name`) || this.constructor ? functionName(this.constructor) : 'madeFunction'
     }
     const Klass = Object.getPrototypeOf(this)
-    
-    if(Klass.constructor?.dependencies) {
-      for( const dependencyName in Klass.constructor.dependencies()) {
-        if (!_.get(args, `[${args.length-1}].${dependencyName}`)) {
+
+    if (Klass.constructor?.dependencies) {
+      for (const dependencyName in Klass.constructor.dependencies()) {
+        if (!_.get(args, `[${args.length - 1}].${dependencyName}`)) {
           console.error(`${this.unitverse.name} requires ${dependencyName}`)
         }
       }
@@ -44,7 +46,7 @@ export abstract class Task {
     // console.log(this.constructor.prototype.dependencies())
   }
 
-  public workflowify (fn: any, config) {
+  public workflowify(fn: any, config) {
     return new Workflow(fn, {}, {
       scope: this.unitverse.parent.scope
     })
@@ -57,7 +59,7 @@ export abstract class Task {
 
   abstract run(input?: any): any | Promise<any>
 
-  async close () {
+  async close() {
     return true
   }
 
@@ -73,30 +75,25 @@ export abstract class Task {
       },
       ...config
     }
-    const Cls = ((func, config) => {
-      class CustomTask extends Task {
-        fn: Function
-    
-        constructor(...options: any) {
-          super(func, config, options)
-          this.unitverse.name = config.name
-          if (config.isFactory) {
-            this.fn = func(...options)
-          } else {
-            this.fn = func
-          }
-        }
-    
-        run (input: any) {
-          if (config.spreadInput) {
-            return this.fn(...input)
-          }
-          return this.fn(input)
-        }
+    class CustomTask extends Task {
+      fn: Function
+
+      constructor(...options: any) {
+        super(func, config, options)
+        this.unitverse.name = config.name
       }
-      //todo something's happening here
-      return CustomTask
-    })(func, config)
-    return Object.create(Cls)
+
+      run(input: any) {
+        let funcToRun = func
+        // if (config.isFactory) {
+        //   funcToRun = func()
+        // }
+        if (config.spreadInput) {
+          return funcToRun(...input)
+        }
+        return funcToRun(input)
+      }
+    }
+    return new CustomTask()
   }
 }

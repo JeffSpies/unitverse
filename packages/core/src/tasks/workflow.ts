@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { Container } from '../util/di/'
-import { makeTask, Service, Task } from '../internal'
+import { Service, Task } from '../internal'
 
 export class Workflow extends Task {
   scope: any
@@ -10,12 +10,12 @@ export class Workflow extends Task {
   wrapperConfig: any
 
   constructor(fn: Function, dependencies: Object, options: any = {}) {
-    super (fn, dependencies, options)
+    super(fn, dependencies, options)
 
     this.scope = options.scope || new Container() // TODO add parent scope in mddle
 
     // If a workflow hasn't been injected
-    if(!this.scope.resolve(this.unitverse.name)) {
+    if (!this.scope.resolve(this.unitverse.name)) {
       // Then register a workflow
       this.register({
         Workflow,
@@ -33,19 +33,19 @@ export class Workflow extends Task {
     this.wrapperConfig = WrapperConfig || {};
     this.inject(fn)
   }
-  
+
   public register(dependencies: Object): void {
     let obj: any,
-        args: any
-    
-    for(const [name, value] of Object.entries(dependencies)) {
+      args: any
+
+    for (const [name, value] of Object.entries(dependencies)) {
       obj = value
       args = {}
       if (_.isArray(obj)) {
         [obj, args] = obj
       }
 
-      if ( obj.prototype instanceof Service ) {
+      if (obj.prototype instanceof Service) {
         this.scope.registerClass(_.upperFirst(name), obj, args, {
           resolve: 'identity',
           inject: true,
@@ -73,8 +73,9 @@ export class Workflow extends Task {
     }
   }
 
-  public newWorkflow(fn:any, dependencies = {}, options = {}) {
+  public newWorkflow(fn: any, dependencies = {}, options = {}) {
     // Here we're using the resolved workflow
+    // todo here's the problem
     const resolvedWorkflowClass = this.scope.resolve(this.unitverse.name)
     return new resolvedWorkflowClass(fn, dependencies, {
       ...options,
@@ -82,7 +83,7 @@ export class Workflow extends Task {
     })
   }
 
-  private addTask (task: Task): boolean {
+  private addTask(task: Task): boolean {
     task.setParentWorkflow(this)
     this.tasks.push(
       new this.wrapperClass(task, this.wrapperConfig)
@@ -97,14 +98,13 @@ export class Workflow extends Task {
     const results = [];
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i]
-      console.log(task.name, task)
       if (task instanceof Task) {
         results.push(
           this.addTask(task)
         )
       } else if (_.isFunction(task)) {
-        const NewTaskClass = makeTask(
-          function Tmp () {
+        const obj = Task.fromFunction(
+          function Tmp() {
             return task
           },
           {
@@ -112,7 +112,7 @@ export class Workflow extends Task {
           }
         )
         results.push(
-          this.addTask(new NewTaskClass())
+          this.addTask(obj)
         )
       } else {
         throw new Error('That type is not currently supported')
@@ -126,7 +126,7 @@ export class Workflow extends Task {
 
   public async run(input: any): Promise<any> {
     let result: any = input
-    for ( let i = 0; i < this.tasks.length; i++ ) {
+    for (let i = 0; i < this.tasks.length; i++) {
       result = await this.tasks[i].run(result)
     }
     return result

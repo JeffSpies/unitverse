@@ -9,8 +9,6 @@ import { Emitter } from '../src/services/emitters/events'
 import { DoWhile } from '../src/tasks/do-while'
 import { Identity } from '../src/tasks/identity'
 
-import { makeTask } from '../src/helpers/makeTask'
-
 (async () => {
   const services = {
     Emitter
@@ -33,8 +31,8 @@ import { makeTask } from '../src/helpers/makeTask'
         new DoWhile(() => [
           Task.fromFunction((input: number) => input + 1, { name: 'doFunction' })
         ], () => [
-         (input: number) => input < 5
-        ])
+         Task.fromFunction((input: number) => input < 5, { name: 'whileFunction' })
+        ], { name: 'inc' })
       ]
     }, {
       ...services,
