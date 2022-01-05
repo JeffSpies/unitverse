@@ -30,7 +30,7 @@ export class Wrapper extends Task {
   public static dependencies () {
     return {
       emitter: {
-        version: ['0.0.1', '0.0.1'],
+        version: '>0.0.1',
         required: true
       },
       log: {}
