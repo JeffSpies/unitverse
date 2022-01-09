@@ -1,6 +1,14 @@
 {
-  "name": "di",
+  "name": "@unitverse/di",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "description": ""
 }
