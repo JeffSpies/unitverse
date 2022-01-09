@@ -15,14 +15,16 @@ describe('VersionedRegistry', () => {
 
   describe('Basic functionality', () => {
     it ('The registry with default settings', () => {
-      vr.register('test1', '0.0.1', 1)
-      expect(vr.get('test1', '>0.0.0')).to.equal(1)
-      vr.register('test1', '0.0.2', 2)
-      expect(vr.get('test1', '>0.0.0')).to.equal(2)
-      vr.register('test1', '0.0.3', 3)
-      vr.register('test1', '0.0.4', 4)
-      expect(vr.get('test1', '>0.0.0')).to.equal(4)
-      expect(vr.get('test1', '>0.0.2 <0.0.4')).to.equal(3)
+      const id = 'test1'
+
+      vr.registerVersion(id, '0.0.1', 1)
+      expect(vr.get(id)).to.equal(1)
+      vr.registerVersion(id, '0.0.2', 2)
+      expect(vr.get(id)).to.equal(2)
+      vr.registerVersion(id, '0.0.3', 3)
+      vr.registerVersion(id, '0.0.4', 4)
+      expect(vr.get(id)).to.equal(4)
+      expect(vr.getVersion(id, '>0.0.2 <0.0.4')).to.equal(3)
     })
   })
 })
