@@ -16,8 +16,8 @@ export interface TypedStore {
 }
 
 export class VersionedRegistry {
-  store:TypedStore = {}
-  meta:TypedStore = {}
+  store: TypedStore = {}
+  meta: TypedStore = {}
 
   defaultStoreType: string = ''
 

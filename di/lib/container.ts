@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { openStdin } from 'process'
 import { asClass as asClassResolver, ClassOptions } from './resolvers/class'
 import { asFunction as asFunctionResolver, FunctionOptions } from './resolvers/function'
 import { asValue as asValueResolver, ValueOptions } from './resolvers/value'
