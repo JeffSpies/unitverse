@@ -35,6 +35,33 @@ describe('di', () => {
     container = new Container()
   })
 
+  describe('new interface', () => {
+    const unit = {
+      fn1: {
+        name: 'jeffspies/sum',
+        version: '0.0.1',
+        dependencies: {
+          fn1: {
+            type: 'jeffspies/fn1',
+            version: '>0.0.1'
+          }
+        }
+      }
+    }
+
+    class Sum {
+      constructor() {
+
+      }
+
+      fn (x) {
+
+      }
+    }
+
+    container.registerClass('Sum', Sum, { fn1:  })
+  })
+
   describe('working with classes', () => {
     it ('the class should work', () => {
       const test1 = new Test1()

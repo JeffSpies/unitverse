@@ -1,13 +1,11 @@
 import { Container } from "../container"
 import _ from 'lodash'
 
-interface RegistrationOptions {
+export interface FunctionOptions {
   inject?: boolean
   isLazy?: boolean
-}
-
-export interface FunctionOptions extends RegistrationOptions {
   defaults?: any
+  dependencies?: any
 }
 
 export function asFunction(
@@ -34,7 +32,7 @@ export function asFunction(
           if (Object.keys(opts.defaults).includes(propString)) {
             return opts.defaults[propString]
           }
-          const resolved = this.resolve(propString)
+          const resolved = this.resolveInDependencies(propString, opts.dependencies)
           return resolved
         }.bind(container)
       })

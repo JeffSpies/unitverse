@@ -1,15 +1,12 @@
 import _ from "lodash"
 import { Container } from "../container"
 
-interface RegistrationOptions {
+export interface ClassOptions {
   inject?: boolean
   isLazy?: boolean
-}
-
-export interface ClassOptions extends RegistrationOptions {
-  constructorDefaults?: any
   resolve?: 'instance' | 'identity'
   defaults?: any
+  dependencies?: any
 }
 
 export function asClass(container: Container, cls: any, opts: ClassOptions) {
@@ -17,7 +14,6 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
   if (opts.inject) {
     proxy = new Proxy(cls, {
       construct: function(target: any, args: any) {
-
         // If the constructor takes no arguments, then it can't be expecting
         // injected objects. However, there are occasions where the
         // constructor is a, e.g., a makeTask wrapper, and args are passed in, but
@@ -63,7 +59,7 @@ export function asClass(container: Container, cls: any, opts: ClassOptions) {
             }
 
             // Then, check the containerd--if not found, return undefined
-            const resolved = this.resolve(propString)
+            const resolved = this.resolveInDependencies(propString, opts.dependencies)
             return resolved
           }.bind(container)
         })

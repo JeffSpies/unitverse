@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Node 12",
+ 
+  "compilerOptions": {
+    // "lib": ["es2019", "es2020.promise", "es2020.bigint", "es2020.string"],
+    "lib": ["es7"],
+    "allowJs": true,
+    "module": "commonjs",
+    "target": "es5",
+    "outDir": "dist",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "sourceMap": true
+  },
+
+  "include": [
+    "src/**/*",
+    "runs/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts"
+  ]
+}
