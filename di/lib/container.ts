@@ -79,6 +79,10 @@ export class Container {
   }
 }
 
+function isClass (x) {
+  return _.isFunction(x) && x.constructor
+}
+
 type ClassRef = new (...args: any[]) => any;
 
 type Storable = ClassRef | Function
