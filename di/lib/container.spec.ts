@@ -48,7 +48,7 @@ describe('di', () => {
 
   describe('new interface', () => {
     it('works', () => {
-      container.registerClass({
+      container.register({
         name: 'jeffspies/test1',
         version: '0.0.1',
         main: Test1,
@@ -57,7 +57,7 @@ describe('di', () => {
         }
       })
 
-      container.registerClass({
+      container.register({
         name: 'jeffspies/test2',
         version: '0.0.1',
         main: Test2,

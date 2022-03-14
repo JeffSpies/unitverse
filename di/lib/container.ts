@@ -11,35 +11,43 @@ export class Container {
     this.registry = new VersionedRegistry()
   }
 
-  public getStoredObject (pkg: Package, options?: ResolveOptions): StoredObject {
+  public resolveAsStoredObject (pkg: Package, options?: ResolveOptions): StoredObject {
     const opts = {
       ...ClassOptionDefaults,
       ...options,
       dependencies: pkg.dependencies
     };
 
-    const obj = asClass(this, pkg.main, opts);
+    let obj: any;
+
+    if (isClass(pkg.main)) {
+      obj = asClass(this, pkg.main, <ClassOptions>opts);
+    } else if (_.isFunction(pkg.main)) {
+      obj = asFunction(this, pkg.main, <FunctionOptions>opts);
+    } else {
+      obj = pkg.main;
+    }
 
     return <StoredObject>{
       ...opts,
       obj
-    }
+    };
   }
 
-  public registerClass (pkg: Package, options: ClassOptions): void {
+  public resolveInDependencies (name: string, dependencies: Dependencies) {
+    const dependency = dependencies[name];
+    if (dependency === undefined) {
+      return undefined;
+    }
+    return this.resolve(dependency.id, dependency.version);
+  }
+
+  public register (pkg: Package, options: ResolveOptions): void {
     this.registry.registerVersion(
       pkg.name,
       pkg.version,
-      this.getStoredObject(pkg, options)
-    )
-  };
-
-  public resolveInDependencies (name:string, dependencies:Dependencies) {
-    const dependency = dependencies[name];
-    if (dependency === undefined) {
-      return undefined
-    }
-    return this.resolve(dependency.id, dependency.version);
+      this.resolveAsStoredObject(pkg, options)
+    );
   }
 
   public resolve(obj:Storable, dependencies:Dependencies, options?:ResolveOptions): any
@@ -47,22 +55,25 @@ export class Container {
   public resolve(name:string, version:string): any
   public resolve(first:Storable|Package|string, second?:Dependencies|ResolveOptions|string, third?:ResolveOptions): any {
     if (!_.isString(first) && _.isPlainObject(first)) {
-      const pkg = first
-      const options = second
-      return this.getStoredObject(<Package>pkg, <ResolveOptions>options).obj
+      const pkg = first;
+      const options = second;
+      return this.resolveAsStoredObject(<Package>pkg, <ResolveOptions>options).obj;
     }
 
     if (!_.isString(first) && _.isFunction(first)) {
-      const obj = first
-      const dependencies = second
-      const options = third
-      return this.getStoredObject(<Package>{
+      const obj = first;
+      const dependencies = second;
+      const options = third;
+
+      const stored = this.resolveAsStoredObject(<Package>{
         name: 'tmp',
         version: '0.0.0',
         type: 'class',
         main:obj,
         dependencies
-      }, <ClassOptions>options).obj
+      }, <ClassOptions>options);
+
+      return stored.obj;
     }
 
     const name = <string>first;
