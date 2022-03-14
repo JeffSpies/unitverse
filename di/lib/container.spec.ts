@@ -95,8 +95,6 @@ describe('di', () => {
 
       const obj2 = new cls2();
       expect(obj2.fn(3)).to.equal(4);
-
-      console.log(cls2.constructor)
-    })
+    });
   })
 })
