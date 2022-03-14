@@ -4,6 +4,7 @@ import _ from 'lodash'
 export interface FunctionOptions {
   inject?: boolean
   isLazy?: boolean
+  resolve?: 'identity'
   defaults?: any
   dependencies?: any
 }
