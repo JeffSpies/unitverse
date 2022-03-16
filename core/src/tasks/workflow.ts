@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Container } from '../util/di/'
+import { Container } from '@unitverse/di'
 import { Service, Task } from '../internal'
 
 export class Workflow extends Task {
