@@ -46,12 +46,15 @@
     "semver": "^7.3.5",
     "serialize-javascript": "^5.0.1",
     "socket.io": "^4.1.2",
-    "url-parse": "^1.5.1"
+    "url-parse": "^1.5.1",
+    "@unitverse/di": "workspace:*"
   },
   "scripts": {
+    "build": "",
     "mon": "nodemon --watch src --watch examples -e ts --exec \"ts-node examples/amazon.ts\"",
     "amazon": "ts-node examples/amazon.ts",
     "spec": "ts-node examples/spec.ts",
+    "index": "ts-node index.ts",
     "di": "ts-node diindex.ts",
     "test": "mocha ./**/*.test.ts --reporter spec --require ts-node/register --exit",
     "test1": "mocha --reporter spec --require ts-node/register --exit",

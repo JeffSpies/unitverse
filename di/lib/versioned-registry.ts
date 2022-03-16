@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import semver from 'semver'
 
+// todo allow for different types
 type StoredObject = any
 
 interface VersionedStore {
